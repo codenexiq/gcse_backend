@@ -46,15 +46,15 @@ jobs:
           DIR: ${{ vars.STAGING_SERVER_DIR }}
           HOST: ${{ secrets.STAGING_SSH_HOST }}
           USER: ${{ secrets.STAGING_SSH_USERNAME }}
-          KEY: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
-          KNOWN: ${{ secrets.STAGING_SSH_KNOWN_HOSTS }}
+          PASS: ${{ secrets.STAGING_SSH_PASSWORD }}
+          FINGERPRINT: ${{ secrets.STAGING_SSH_HOST_FINGERPRINT }}
         run: |
           missing=""
           [ -z "$DIR" ] && missing="$missing STAGING_SERVER_DIR(variable)"
           [ -z "$HOST" ] && missing="$missing STAGING_SSH_HOST(secret)"
           [ -z "$USER" ] && missing="$missing STAGING_SSH_USERNAME(secret)"
-          [ -z "$KEY" ] && missing="$missing STAGING_SSH_PRIVATE_KEY(secret)"
-          [ -z "$KNOWN" ] && missing="$missing STAGING_SSH_KNOWN_HOSTS(secret)"
+          [ -z "$PASS" ] && missing="$missing STAGING_SSH_PASSWORD(secret)"
+          [ -z "$FINGERPRINT" ] && missing="$missing STAGING_SSH_HOST_FINGERPRINT(secret)"
           if [ -n "$missing" ]; then echo "Missing settings:$missing"; exit 1; fi
           case "$DIR" in */) ;; *) echo "STAGING_SERVER_DIR must end with /"; exit 1;; esac
 
@@ -85,19 +85,23 @@ jobs:
         env:
           HOST: ${{ secrets.STAGING_SSH_HOST }}
           USER: ${{ secrets.STAGING_SSH_USERNAME }}
-          KEY: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
-          KNOWN: ${{ secrets.STAGING_SSH_KNOWN_HOSTS }}
+          PASS: ${{ secrets.STAGING_SSH_PASSWORD }}
+          FINGERPRINT: ${{ secrets.STAGING_SSH_HOST_FINGERPRINT }}
           PORT: ${{ vars.STAGING_SSH_PORT }}
           DIR: ${{ vars.STAGING_SERVER_DIR }}
           # Stays a dry run (nothing is uploaded) until STAGING_DRY_RUN is set to false.
           DRY: ${{ vars.STAGING_DRY_RUN != 'false' }}
         run: |
           set -e
+          sudo apt-get install -y -qq sshpass > /dev/null
           install -m 700 -d ~/.ssh
-          echo "$KEY" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          echo "$KNOWN" > ~/.ssh/known_hosts
-          SSH="ssh -p ${PORT:-65002} -i $HOME/.ssh/deploy_key -o UserKnownHostsFile=$HOME/.ssh/known_hosts -o StrictHostKeyChecking=yes -o IdentitiesOnly=yes"
+          # Trust the server only if its ED25519 fingerprint is the one copied from hPanel.
+          ssh-keyscan -t ed25519 -p "${PORT:-65002}" "$HOST" > ~/.ssh/scanned 2>/dev/null
+          SEEN=$(ssh-keygen -lf ~/.ssh/scanned | awk '{print $2}')
+          if [ "$SEEN" != "$FINGERPRINT" ]; then echo "Server fingerprint does not match SSH_HOST_FINGERPRINT (got $SEEN). Not connecting."; exit 1; fi
+          mv ~/.ssh/scanned ~/.ssh/known_hosts
+          export SSHPASS="$PASS"
+          SSH="sshpass -e ssh -p ${PORT:-65002} -o UserKnownHostsFile=$HOME/.ssh/known_hosts -o StrictHostKeyChecking=yes -o PreferredAuthentications=password -o PubkeyAuthentication=no"
           FLAGS="-az --itemize-changes --exclude=.env --exclude=.env.* --exclude=node_modules"
           [ "$DRY" = "true" ] && { FLAGS="$FLAGS --dry-run"; echo "DRY RUN: nothing is uploaded."; }
           REMOTE="$USER@$HOST:$DIR"
@@ -105,4 +109,3 @@ jobs:
             rsync $FLAGS --delete -e "$SSH" "$d" "$REMOTE$(basename "$d")/"
           done
           rsync $FLAGS -e "$SSH" $(find deploy -maxdepth 1 -type f) "$REMOTE"
-          rm -f ~/.ssh/deploy_key
