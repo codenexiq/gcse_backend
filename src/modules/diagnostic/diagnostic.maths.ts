@@ -73,6 +73,25 @@ const power = (c: number, p: number) => {
 /** Adds a sign: 5 -> "+ 5", -5 -> "- 5" */
 const plus = (n: number) => (n >= 0 ? `+ ${n}` : `- ${Math.abs(n)}`);
 
+/**
+ * A fingerprint of an answer's VALUE: 2/4 and 1/2 share one, and so do (x + 1)(x + 4) and (x + 4)(x + 1).
+ * Two options with the same fingerprint would both be right, so the question writer never allows that.
+ */
+export function valueKey(text: string): string {
+  const fraction = text.match(/^\$\frac\{(-?\d+)\}\{(\d+)\}\$$/);
+  if (fraction) {
+    const g = gcd(Math.abs(Number(fraction[1])), Number(fraction[2]));
+    return `f:${Number(fraction[1]) / g}/${Number(fraction[2]) / g}`;
+  }
+  const plain = text.replace(/[£°$]| cm²| cm/g, "").trim();
+  if (/^-?\d+(\.\d+)?$/.test(plain)) return `n:${Number(plain)}`;
+  const roots = (text.match(/x = (-?\d+)/g) ?? []).map((r) => Number(r.slice(4))).sort((a, b) => a - b);
+  if (roots.length === 2) return `r:${roots.join(",")}`;
+  const brackets = [...text.matchAll(/\(x ([+-]) (\d+)\)/g)].map((b) => (b[1] === "-" ? -1 : 1) * Number(b[2])).sort((a, b) => a - b);
+  if (brackets.length === 2) return `b:${brackets.join(",")}`;
+  return `t:${text.replace(/\s/g, "")}`;
+}
+
 /** Three different wrong whole numbers: the likely mistakes first, then numbers close to the answer. */
 function wrongNumbers(answer: number, mistakes: [number, string?][], format: (n: number) => string = String): Wrong[] {
   const out: { n: number; why?: string }[] = [];
@@ -561,8 +580,15 @@ export function generateMathsQuestions(r: Request): GeneratedQuestion[] {
     const g = pool[turn++ % pool.length];
     const { question, correct, wrongs } = g.make();
     if (seen.has(question)) continue; // already exists, or already made in this set
+    // A wrong answer must differ in VALUE from the right answer and from the other wrong answers.
+    const keys = new Set([valueKey(correct)]);
     const distinct: Wrong[] = [];
-    for (const x of wrongs) if (x.text !== correct && !distinct.some((d) => d.text === x.text)) distinct.push(x);
+    for (const x of wrongs) {
+      const key = valueKey(x.text);
+      if (keys.has(key)) continue;
+      keys.add(key);
+      distinct.push(x);
+    }
     if (distinct.length < 3) continue;
     seen.add(question);
     const options = shuffle([

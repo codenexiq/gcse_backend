@@ -6,6 +6,7 @@ interface QuestionRow extends RowDataPacket {
   id: number;
   level: QuestionInput["level"];
   subjectId: number;
+  batchId: number | null;
   tier: QuestionInput["tier"];
   topic: string;
   question: string;
@@ -21,13 +22,15 @@ export interface Question {
   id: number;
   level: QuestionInput["level"];
   subjectId: number;
+  /** The generated set this question belongs to, or null (written by hand). */
+  batchId: number | null;
   tier: QuestionInput["tier"];
   topic: string;
   question: string;
   options: { text: string; isCorrect: boolean; misconception: string | null }[];
 }
 
-const QUESTION_SELECT = "SELECT id, level, subject_id AS subjectId, tier, topic, question FROM diagnostic_questions";
+const QUESTION_SELECT = "SELECT id, level, subject_id AS subjectId, batch_id AS batchId, tier, topic, question FROM diagnostic_questions";
 
 async function withOptions(rows: QuestionRow[]): Promise<Question[]> {
   if (rows.length === 0) return [];
@@ -39,6 +42,7 @@ async function withOptions(rows: QuestionRow[]): Promise<Question[]> {
     id: r.id,
     level: r.level,
     subjectId: r.subjectId,
+    batchId: r.batchId,
     tier: r.tier,
     topic: r.topic,
     question: r.question,
@@ -95,11 +99,11 @@ async function inTransaction<T>(work: (conn: PoolConnection) => Promise<T>) {
   }
 }
 
-export async function create(q: QuestionInput) {
+export async function create(q: QuestionInput, batchId: number | null = null) {
   const id = await inTransaction(async (conn) => {
     const [result] = await conn.query<ResultSetHeader>(
-      "INSERT INTO diagnostic_questions (level, subject_id, tier, topic, question) VALUES (?, ?, ?, ?, ?)",
-      [q.level, q.subjectId, q.tier, q.topic, q.question]
+      "INSERT INTO diagnostic_questions (level, subject_id, batch_id, tier, topic, question) VALUES (?, ?, ?, ?, ?, ?)",
+      [q.level, q.subjectId, batchId, q.tier, q.topic, q.question]
     );
     await writeOptions(conn, result.insertId, q.options);
     return result.insertId;
@@ -128,4 +132,41 @@ export async function update(id: number, q: QuestionInput) {
 export async function remove(id: number) {
   const [result] = await pool.query<ResultSetHeader>("DELETE FROM diagnostic_questions WHERE id = ?", [id]);
   return result.affectedRows > 0;
+}
+
+// ---- generated sets ("batches"): one card per click of Generate questions -------------------------
+
+export interface Batch {
+  id: number;
+  level: QuestionInput["level"];
+  subjectId: number;
+  tier: QuestionInput["tier"];
+  topic: string | null;
+  createdAt: string;
+}
+interface BatchRow extends RowDataPacket, Omit<Batch, "createdAt"> {
+  createdAt: Date;
+}
+
+const toBatch = (r: BatchRow): Batch => ({ id: r.id, level: r.level, subjectId: r.subjectId, tier: r.tier, topic: r.topic, createdAt: new Date(r.createdAt).toISOString() });
+const BATCH_SELECT = "SELECT id, level, subject_id AS subjectId, tier, topic, created_at AS createdAt FROM diagnostic_batches";
+
+export async function listBatches() {
+  const [rows] = await pool.query<BatchRow[]>(`${BATCH_SELECT} ORDER BY created_at DESC, id DESC`);
+  return rows.map(toBatch);
+}
+
+export async function createBatch(b: { level: QuestionInput["level"]; subjectId: number; tier: QuestionInput["tier"]; topic?: string }) {
+  const [result] = await pool.query<ResultSetHeader>("INSERT INTO diagnostic_batches (level, subject_id, tier, topic) VALUES (?, ?, ?, ?)", [b.level, b.subjectId, b.tier, b.topic ?? null]);
+  const [rows] = await pool.query<BatchRow[]>(`${BATCH_SELECT} WHERE id = ?`, [result.insertId]);
+  return toBatch(rows[0]);
+}
+
+/** Deletes a set and every question in it. */
+export async function removeBatch(id: number) {
+  return inTransaction(async (conn) => {
+    await conn.query("DELETE FROM diagnostic_questions WHERE batch_id = ?", [id]);
+    const [result] = await conn.query<ResultSetHeader>("DELETE FROM diagnostic_batches WHERE id = ?", [id]);
+    return result.affectedRows > 0;
+  });
 }

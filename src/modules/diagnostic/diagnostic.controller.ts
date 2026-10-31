@@ -76,9 +76,29 @@ export async function generateAndSave(req: Request, res: Response, next: NextFun
       existing: await Diagnostic.existingQuestionTexts(body.level, body.subjectId),
     });
 
-    const saved = [];
-    for (const d of drafts) saved.push(await Diagnostic.create({ ...d, subjectId: body.subjectId }));
-    res.status(201).json(saved);
+    // Each click makes one set (a "batch"), shown as one card.
+    const batch = await Diagnostic.createBatch({ level: body.level, subjectId: body.subjectId, tier: body.tier, topic: body.topic });
+    const questions = [];
+    for (const d of drafts) questions.push(await Diagnostic.create({ ...d, subjectId: body.subjectId }, batch.id));
+    res.status(201).json({ batch, questions });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function listBatches(req: Request, res: Response, next: NextFunction) {
+  try {
+    res.json(await Diagnostic.listBatches());
+  } catch (err) {
+    next(err);
+  }
+}
+
+/** Deletes a generated set and all of its questions. */
+export async function deleteBatch(req: Request, res: Response, next: NextFunction) {
+  try {
+    if (!(await Diagnostic.removeBatch(parseId(req)))) throw new AppError(404, "Set not found");
+    res.status(204).end();
   } catch (err) {
     next(err);
   }
