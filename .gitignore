@@ -1,0 +1,21 @@
+# Secrets: NEVER commit these. Real values live only on the server (hPanel) and in GitHub Secrets.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+id_rsa*
+
+# Dependencies and build output (GitHub builds these itself)
+node_modules/
+.next/
+out/
+dist/
+*.tsbuildinfo
+
+# Junk
+.DS_Store
+*.log
+npm-debug.log*
+tmp/
+deploy/

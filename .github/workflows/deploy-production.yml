@@ -1,0 +1,98 @@
+name: Deploy to Production
+
+# Runs when something is merged / pushed to the `main` branch (or started by hand from the Actions tab).
+# It DRY-RUNS (lists what it would upload, uploads nothing) until the repository variable PRODUCTION_DRY_RUN is set to false.
+# Settings it needs are listed in the deployment notes (kept outside this repository).
+# The `production` environment should have "Required reviewers" turned on, so a person must approve every live deployment.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Never let two production deployments run at the same time.
+concurrency:
+  group: deploy-production-backend
+  cancel-in-progress: false
+
+jobs:
+  # 1. Install, type-check and build. If anything here fails, nothing is deployed.
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get the code
+        uses: actions/checkout@v7
+
+      - name: Install Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Install, type-check and build
+        run: |
+          npm ci
+          npm run typecheck
+          npm run build
+
+  # 2. Upload the finished files.
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Check the settings exist
+        env:
+          DIR: ${{ vars.PRODUCTION_SERVER_DIR }}
+          HOST: ${{ secrets.FTP_SERVER }}
+          USER: ${{ secrets.FTP_USERNAME }}
+          PASS: ${{ secrets.FTP_PASSWORD }}
+        run: |
+          missing=""
+          [ -z "$DIR" ] && missing="$missing PRODUCTION_SERVER_DIR(variable)"
+          [ -z "$HOST" ] && missing="$missing FTP_SERVER(secret)"
+          [ -z "$USER" ] && missing="$missing FTP_USERNAME(secret)"
+          [ -z "$PASS" ] && missing="$missing FTP_PASSWORD(secret)"
+          if [ -n "$missing" ]; then echo "Missing settings:$missing"; exit 1; fi
+          case "$DIR" in */) ;; *) echo "PRODUCTION_SERVER_DIR must end with /"; exit 1;; esac
+
+      - name: Get the code
+        uses: actions/checkout@v7
+
+      - name: Install Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Build
+        run: |
+          npm ci
+          npm run build
+
+      # Only what the server needs. NEVER a .env file: real settings are set in hPanel.
+      - name: Assemble the deploy package
+        run: |
+          mkdir -p deploy/tmp
+          cp -r dist deploy/dist
+          cp -r database deploy/database
+          cp package.json package-lock.json deploy/
+          date -u +"%Y-%m-%dT%H:%M:%SZ" > deploy/tmp/restart.txt
+
+      - name: Upload by FTPS
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          local-dir: ./deploy/
+          server-dir: ${{ vars.PRODUCTION_SERVER_DIR }}
+          # Stays a dry run (nothing is uploaded) until PRODUCTION_DRY_RUN is set to false.
+          dry-run: ${{ vars.PRODUCTION_DRY_RUN != 'false' }}
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            .env
+            .env.*
