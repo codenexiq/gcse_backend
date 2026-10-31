@@ -2,7 +2,7 @@ name: Deploy to Production
 
 # Runs when something is merged / pushed to the `main` branch (or started by hand from the Actions tab).
 # It DRY-RUNS (lists what it would upload, uploads nothing) until the repository variable PRODUCTION_DRY_RUN is set to false.
-# Settings it needs are listed in the deployment notes (kept outside this repository).
+# See DEPLOYMENT_NOTES.md, section 15.
 # The `production` environment should have "Required reviewers" turned on, so a person must approve every live deployment.
 on:
   push:
@@ -45,15 +45,17 @@ jobs:
       - name: Check the settings exist
         env:
           DIR: ${{ vars.PRODUCTION_SERVER_DIR }}
-          HOST: ${{ secrets.FTP_SERVER }}
-          USER: ${{ secrets.FTP_USERNAME }}
-          PASS: ${{ secrets.FTP_PASSWORD }}
+          HOST: ${{ secrets.SSH_HOST }}
+          USER: ${{ secrets.SSH_USERNAME }}
+          KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          KNOWN: ${{ secrets.SSH_KNOWN_HOSTS }}
         run: |
           missing=""
           [ -z "$DIR" ] && missing="$missing PRODUCTION_SERVER_DIR(variable)"
-          [ -z "$HOST" ] && missing="$missing FTP_SERVER(secret)"
-          [ -z "$USER" ] && missing="$missing FTP_USERNAME(secret)"
-          [ -z "$PASS" ] && missing="$missing FTP_PASSWORD(secret)"
+          [ -z "$HOST" ] && missing="$missing SSH_HOST(secret)"
+          [ -z "$USER" ] && missing="$missing SSH_USERNAME(secret)"
+          [ -z "$KEY" ] && missing="$missing SSH_PRIVATE_KEY(secret)"
+          [ -z "$KNOWN" ] && missing="$missing SSH_KNOWN_HOSTS(secret)"
           if [ -n "$missing" ]; then echo "Missing settings:$missing"; exit 1; fi
           case "$DIR" in */) ;; *) echo "PRODUCTION_SERVER_DIR must end with /"; exit 1;; esac
 
@@ -79,20 +81,29 @@ jobs:
           cp package.json package-lock.json deploy/
           date -u +"%Y-%m-%dT%H:%M:%SZ" > deploy/tmp/restart.txt
 
-      - name: Upload by FTPS
-        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          protocol: ftps
-          local-dir: ./deploy/
-          server-dir: ${{ vars.PRODUCTION_SERVER_DIR }}
+      # Copies over SSH (rsync). Folders are mirrored; .env files and node_modules on the server are never touched.
+      - name: Upload over SSH
+        env:
+          HOST: ${{ secrets.SSH_HOST }}
+          USER: ${{ secrets.SSH_USERNAME }}
+          KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          KNOWN: ${{ secrets.SSH_KNOWN_HOSTS }}
+          PORT: ${{ vars.PRODUCTION_SSH_PORT }}
+          DIR: ${{ vars.PRODUCTION_SERVER_DIR }}
           # Stays a dry run (nothing is uploaded) until PRODUCTION_DRY_RUN is set to false.
-          dry-run: ${{ vars.PRODUCTION_DRY_RUN != 'false' }}
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/node_modules/**
-            .env
-            .env.*
+          DRY: ${{ vars.PRODUCTION_DRY_RUN != 'false' }}
+        run: |
+          set -e
+          install -m 700 -d ~/.ssh
+          echo "$KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          echo "$KNOWN" > ~/.ssh/known_hosts
+          SSH="ssh -p ${PORT:-65002} -i $HOME/.ssh/deploy_key -o UserKnownHostsFile=$HOME/.ssh/known_hosts -o StrictHostKeyChecking=yes -o IdentitiesOnly=yes"
+          FLAGS="-az --itemize-changes --exclude=.env --exclude=.env.* --exclude=node_modules"
+          [ "$DRY" = "true" ] && { FLAGS="$FLAGS --dry-run"; echo "DRY RUN: nothing is uploaded."; }
+          REMOTE="$USER@$HOST:$DIR"
+          for d in deploy/*/; do
+            rsync $FLAGS --delete -e "$SSH" "$d" "$REMOTE$(basename "$d")/"
+          done
+          rsync $FLAGS -e "$SSH" $(find deploy -maxdepth 1 -type f) "$REMOTE"
+          rm -f ~/.ssh/deploy_key
