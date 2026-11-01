@@ -2,8 +2,8 @@ import { z } from "zod";
 
 export const sendSchema = z
   .object({
-    // Tutors and admins say which student's conversation; a student always writes in their own.
-    studentId: z.number().int().positive().optional(),
+    // The other person in the chat: a student names the tutor or admin, a tutor or admin names the student.
+    peerId: z.number().int().positive().optional(),
     body: z.string().trim().max(2000, "A message can be 2000 characters at most").optional(),
     attachmentId: z.number().int().positive().optional(),
   })

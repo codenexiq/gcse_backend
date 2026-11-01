@@ -1,5 +1,4 @@
 import express, { Router, type NextFunction, type Request, type Response } from "express";
-import { requireRole } from "../../middleware/requireRole/index.js";
 import { validate } from "../../middleware/validate/index.js";
 import { chatReadLimiter, chatWriteLimiter } from "../../middleware/rateLimiters/index.js";
 import { AppError } from "../../utils/AppError/index.js";
@@ -8,9 +7,9 @@ import { MAX_FILE_BYTES, sendSchema } from "./chat.schemas.js";
 
 const router = Router();
 
-// Students, tutors and admins all chat; the controller decides whose conversation each one can reach.
+// Every chat is between one student and one tutor/admin. The controller works the pair out from who is asking, so nobody can reach another person's chat.
 // Reading is polled every few seconds, so it has its own roomy limit (the global one would run out).
-router.get("/conversations", chatReadLimiter, requireRole("tutor", "admin"), listConversations);
+router.get("/conversations", chatReadLimiter, listConversations); // students see the tutors, tutors and admins see the students
 router.get("/messages", chatReadLimiter, readMessages);
 router.get("/unread", chatReadLimiter, unreadCount);
 router.get("/attachments/:id", chatReadLimiter, downloadAttachment);

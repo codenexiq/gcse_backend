@@ -2,10 +2,23 @@ import type { ResultSetHeader, RowDataPacket } from "mysql2";
 import { pool } from "../../config/db/index.js";
 import type { Role } from "../auth/user.model.js";
 
+// A chat belongs to ONE student and ONE tutor/admin (staff). Two admins talking to the same student have two separate chats.
+export interface Pair {
+  studentId: number;
+  staffId: number;
+}
+
+/** The role of an account, or null when there is no such account. */
+export async function roleOf(id: number): Promise<Role | null> {
+  const [rows] = await pool.query<RowDataPacket[]>("SELECT role FROM users WHERE id = ?", [id]);
+  return rows[0] ? (rows[0].role as Role) : null;
+}
+
 interface ConversationRow extends RowDataPacket {
-  student_id: number;
+  peer_id: number;
   full_name: string;
   email: string;
+  role: Role;
   last_body: string | null;
   last_has_file: number | null;
   last_at: Date | null;
@@ -15,35 +28,15 @@ interface ConversationRow extends RowDataPacket {
   unread: number;
 }
 
-/** Every student with their latest message and how many of their messages the tutors have not read (messages this person cleared do not count). */
-export async function listConversations(userId: number) {
-  // A tutor's inbox has loaded: every student message so far is now delivered.
-  await pool.query(
-    `INSERT INTO chat_conversations (student_id, tutor_delivered_id)
-     SELECT student_id, MAX(id) FROM chat_messages GROUP BY student_id
-     ON DUPLICATE KEY UPDATE tutor_delivered_id = GREATEST(tutor_delivered_id, VALUES(tutor_delivered_id))`
-  );
-  const [rows] = await pool.query<ConversationRow[]>(
-    `SELECT u.id AS student_id, u.full_name, u.email, lm.body AS last_body, (lm.attachment_id IS NOT NULL) AS last_has_file, lm.created_at AS last_at,
-       lm.id AS last_id, (lm.deleted_at IS NOT NULL) AS last_deleted, COALESCE(cl.cleared_id, 0) AS cleared,
-       (SELECT COUNT(*) FROM chat_messages m WHERE m.student_id = u.id AND m.sender_id = u.id AND m.deleted_at IS NULL
-          AND m.id > GREATEST(COALESCE(c.tutor_read_id, 0), COALESCE(cl.cleared_id, 0))) AS unread
-     FROM users u
-     LEFT JOIN chat_conversations c ON c.student_id = u.id
-     LEFT JOIN chat_clears cl ON cl.student_id = u.id AND cl.user_id = ?
-     LEFT JOIN chat_messages lm ON lm.id = (SELECT MAX(id) FROM chat_messages WHERE student_id = u.id)
-     WHERE u.role = 'student'
-     ORDER BY (lm.id IS NULL), lm.id DESC, u.full_name
-     LIMIT 500`,
-    [userId]
-  );
+function toConversations(rows: ConversationRow[]) {
   return rows.map((r) => {
     // Nothing newer than what this person cleared: show the chat as empty.
     const shown = r.last_id !== null && r.last_id > r.cleared;
     return {
-      studentId: r.student_id,
+      peerId: r.peer_id,
       fullName: r.full_name,
       email: r.email,
+      peerRole: r.role,
       lastBody: shown ? (r.last_deleted ? "This message was deleted" : r.last_body) : null,
       lastHasFile: shown && !r.last_deleted && Boolean(r.last_has_file),
       lastAt: shown ? r.last_at : null,
@@ -52,9 +45,55 @@ export async function listConversations(userId: number) {
   });
 }
 
-export async function isStudent(id: number) {
-  const [rows] = await pool.query<RowDataPacket[]>("SELECT id FROM users WHERE id = ? AND role = 'student'", [id]);
-  return rows.length > 0;
+/** A tutor's or admin's list: every student, with THIS person's chat with them. */
+export async function listForStaff(staffId: number) {
+  // The inbox has loaded: the students' messages to this person are now delivered.
+  await pool.query(
+    `INSERT INTO chat_threads (student_id, staff_id, tutor_delivered_id)
+     SELECT student_id, staff_id, MAX(id) FROM chat_messages WHERE staff_id = ? GROUP BY student_id, staff_id
+     ON DUPLICATE KEY UPDATE tutor_delivered_id = GREATEST(tutor_delivered_id, VALUES(tutor_delivered_id))`,
+    [staffId]
+  );
+  const [rows] = await pool.query<ConversationRow[]>(
+    `SELECT u.id AS peer_id, u.full_name, u.email, u.role, lm.body AS last_body, (lm.attachment_id IS NOT NULL) AS last_has_file, lm.created_at AS last_at,
+       lm.id AS last_id, (lm.deleted_at IS NOT NULL) AS last_deleted, COALESCE(cl.cleared_id, 0) AS cleared,
+       (SELECT COUNT(*) FROM chat_messages m WHERE m.student_id = u.id AND m.staff_id = ? AND m.sender_id = u.id AND m.deleted_at IS NULL
+          AND m.id > GREATEST(COALESCE(c.tutor_read_id, 0), COALESCE(cl.cleared_id, 0))) AS unread
+     FROM users u
+     LEFT JOIN chat_threads c ON c.student_id = u.id AND c.staff_id = ?
+     LEFT JOIN chat_clears cl ON cl.student_id = u.id AND cl.staff_id = ? AND cl.user_id = ?
+     LEFT JOIN chat_messages lm ON lm.id = (SELECT MAX(id) FROM chat_messages WHERE student_id = u.id AND staff_id = ?)
+     WHERE u.role = 'student'
+     ORDER BY (lm.id IS NULL), lm.id DESC, u.full_name
+     LIMIT 500`,
+    [staffId, staffId, staffId, staffId, staffId]
+  );
+  return toConversations(rows);
+}
+
+/** A student's list: every tutor and admin, with this student's chat with each of them. */
+export async function listForStudent(studentId: number) {
+  await pool.query(
+    `INSERT INTO chat_threads (student_id, staff_id, student_delivered_id)
+     SELECT student_id, staff_id, MAX(id) FROM chat_messages WHERE student_id = ? GROUP BY student_id, staff_id
+     ON DUPLICATE KEY UPDATE student_delivered_id = GREATEST(student_delivered_id, VALUES(student_delivered_id))`,
+    [studentId]
+  );
+  const [rows] = await pool.query<ConversationRow[]>(
+    `SELECT u.id AS peer_id, u.full_name, u.email, u.role, lm.body AS last_body, (lm.attachment_id IS NOT NULL) AS last_has_file, lm.created_at AS last_at,
+       lm.id AS last_id, (lm.deleted_at IS NOT NULL) AS last_deleted, COALESCE(cl.cleared_id, 0) AS cleared,
+       (SELECT COUNT(*) FROM chat_messages m WHERE m.student_id = ? AND m.staff_id = u.id AND m.sender_id = u.id AND m.deleted_at IS NULL
+          AND m.id > GREATEST(COALESCE(c.student_read_id, 0), COALESCE(cl.cleared_id, 0))) AS unread
+     FROM users u
+     LEFT JOIN chat_threads c ON c.student_id = ? AND c.staff_id = u.id
+     LEFT JOIN chat_clears cl ON cl.student_id = ? AND cl.staff_id = u.id AND cl.user_id = ?
+     LEFT JOIN chat_messages lm ON lm.id = (SELECT MAX(id) FROM chat_messages WHERE student_id = ? AND staff_id = u.id)
+     WHERE u.role IN ('tutor', 'admin')
+     ORDER BY (lm.id IS NULL), lm.id DESC, u.full_name
+     LIMIT 500`,
+    [studentId, studentId, studentId, studentId, studentId]
+  );
+  return toConversations(rows);
 }
 
 interface MessageRow extends RowDataPacket {
@@ -79,10 +118,10 @@ interface PointerRow extends RowDataPacket {
 }
 
 /** How far each side has received and read, for the ticks. A message is "read" when its id is at or below the pointer. */
-async function getPointers(studentId: number) {
+async function getPointers({ studentId, staffId }: Pair) {
   const [rows] = await pool.query<PointerRow[]>(
-    "SELECT tutor_read_id, tutor_delivered_id, student_read_id, student_delivered_id, wiped_id FROM chat_conversations WHERE student_id = ?",
-    [studentId]
+    "SELECT tutor_read_id, tutor_delivered_id, student_read_id, student_delivered_id, wiped_id FROM chat_threads WHERE student_id = ? AND staff_id = ?",
+    [studentId, staffId]
   );
   const r = rows[0];
   return {
@@ -96,43 +135,44 @@ async function getPointers(studentId: number) {
 }
 
 /** The newest message this person has cleared away (0 = they never cleared this chat). */
-async function clearedUpTo(studentId: number, userId: number) {
-  const [rows] = await pool.query<RowDataPacket[]>("SELECT cleared_id FROM chat_clears WHERE student_id = ? AND user_id = ?", [studentId, userId]);
+async function clearedUpTo({ studentId, staffId }: Pair, userId: number) {
+  const [rows] = await pool.query<RowDataPacket[]>("SELECT cleared_id FROM chat_clears WHERE student_id = ? AND staff_id = ? AND user_id = ?", [studentId, staffId, userId]);
   return rows[0] ? Number(rows[0].cleared_id) : 0;
 }
 
 /**
- * Messages of one conversation. With afterId = 0 these are the latest 200; otherwise only the ones newer than afterId.
+ * Messages of one chat. With afterId = 0 these are the latest 200; otherwise only the ones newer than afterId.
  * Whoever asks has now received them (and read them, if there were any), which turns the other side's ticks.
  * The pointers come back every time, so ticks on older messages can turn blue.
  */
-export async function listMessages(studentId: number, afterId: number, viewer: "student" | "tutor", userId: number) {
+export async function listMessages(pair: Pair, afterId: number, viewer: "student" | "tutor", userId: number) {
+  const { studentId, staffId } = pair;
   const latest = afterId === 0;
   // Messages this person cleared stay hidden from them (the other side still has them).
-  const cleared = await clearedUpTo(studentId, userId);
+  const cleared = await clearedUpTo(pair, userId);
   const from = Math.max(afterId, cleared);
   const [rows] = await pool.query<MessageRow[]>(
     `SELECT m.id, m.sender_id, u.full_name, u.role, m.body, m.created_at, (m.deleted_at IS NOT NULL) AS deleted, a.id AS att_id, a.file_name, a.size
      FROM chat_messages m
      JOIN users u ON u.id = m.sender_id
      LEFT JOIN chat_attachments a ON a.id = m.attachment_id
-     WHERE m.student_id = ? AND m.id > ?
+     WHERE m.student_id = ? AND m.staff_id = ? AND m.id > ?
      ORDER BY m.id ${latest ? "DESC" : "ASC"} LIMIT 200`,
-    [studentId, from]
+    [studentId, staffId, from]
   );
   // Messages deleted by their sender, so a screen that already has them can show "deleted" instead.
   const [gone] = await pool.query<RowDataPacket[]>(
-    "SELECT id FROM chat_messages WHERE student_id = ? AND deleted_at IS NOT NULL AND id > ? ORDER BY id DESC LIMIT 200",
-    [studentId, cleared]
+    "SELECT id FROM chat_messages WHERE student_id = ? AND staff_id = ? AND deleted_at IS NOT NULL AND id > ? ORDER BY id DESC LIMIT 200",
+    [studentId, staffId, cleared]
   );
   if (latest) rows.reverse();
   const who = viewer === "student" ? "student" : "tutor";
   // Delivered: this screen has the newest message. Read: it has shown messages just now.
   await pool.query(
-    `INSERT INTO chat_conversations (student_id, ${who}_delivered_id, ${who}_read_id)
-     SELECT ?, COALESCE(MAX(id), 0), ? FROM chat_messages WHERE student_id = ?
+    `INSERT INTO chat_threads (student_id, staff_id, ${who}_delivered_id, ${who}_read_id)
+     SELECT ?, ?, COALESCE(MAX(id), 0), ? FROM chat_messages WHERE student_id = ? AND staff_id = ?
      ON DUPLICATE KEY UPDATE ${who}_delivered_id = GREATEST(${who}_delivered_id, VALUES(${who}_delivered_id)), ${who}_read_id = GREATEST(${who}_read_id, VALUES(${who}_read_id))`,
-    [studentId, rows.length > 0 ? rows[rows.length - 1].id : 0, studentId]
+    [studentId, staffId, rows.length > 0 ? rows[rows.length - 1].id : 0, studentId, staffId]
   );
   return {
     messages: rows.map((r) => ({
@@ -146,20 +186,20 @@ export async function listMessages(studentId: number, afterId: number, viewer: "
       attachment: r.att_id === null ? null : { id: r.att_id, name: r.file_name as string, size: Number(r.size) },
     })),
     deletedIds: gone.map((g) => Number(g.id)),
-    pointers: await getPointers(studentId),
+    pointers: await getPointers(pair),
   };
 }
 
 /** Each piece of a file is at most this big (hex-encoded in the query it is twice that), well under a 1 MB packet limit. */
 const CHUNK_BYTES = 192 * 1024;
 
-export async function saveAttachment(studentId: number, uploadedBy: number, fileName: string, data: Buffer) {
+export async function saveAttachment({ studentId, staffId }: Pair, uploadedBy: number, fileName: string, data: Buffer) {
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
     const [result] = await conn.query<ResultSetHeader>(
-      "INSERT INTO chat_attachments (student_id, uploaded_by, file_name, size) VALUES (?, ?, ?, ?)",
-      [studentId, uploadedBy, fileName, data.length]
+      "INSERT INTO chat_attachments (student_id, staff_id, uploaded_by, file_name, size) VALUES (?, ?, ?, ?, ?)",
+      [studentId, staffId, uploadedBy, fileName, data.length]
     );
     for (let seq = 0, at = 0; at < data.length; seq++, at += CHUNK_BYTES) {
       await conn.query("INSERT INTO chat_attachment_chunks (attachment_id, seq, data) VALUES (?, ?, ?)", [result.insertId, seq, data.subarray(at, at + CHUNK_BYTES)]);
@@ -174,15 +214,15 @@ export async function saveAttachment(studentId: number, uploadedBy: number, file
   }
 }
 
-/** Adds a message. The file (if any) must be one this person just uploaded to this conversation and not used yet. */
-export async function addMessage(studentId: number, senderId: number, body: string | undefined, attachmentId: number | undefined) {
+/** Adds a message. The file (if any) must be one this person just uploaded to this chat and not used yet. */
+export async function addMessage({ studentId, staffId }: Pair, senderId: number, body: string | undefined, attachmentId: number | undefined) {
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
     if (attachmentId !== undefined) {
       const [att] = await conn.query<RowDataPacket[]>(
-        "SELECT id FROM chat_attachments WHERE id = ? AND student_id = ? AND uploaded_by = ? AND message_id IS NULL FOR UPDATE",
-        [attachmentId, studentId, senderId]
+        "SELECT id FROM chat_attachments WHERE id = ? AND student_id = ? AND staff_id = ? AND uploaded_by = ? AND message_id IS NULL FOR UPDATE",
+        [attachmentId, studentId, staffId, senderId]
       );
       if (att.length === 0) {
         await conn.rollback();
@@ -190,8 +230,8 @@ export async function addMessage(studentId: number, senderId: number, body: stri
       }
     }
     const [result] = await conn.query<ResultSetHeader>(
-      "INSERT INTO chat_messages (student_id, sender_id, body, attachment_id) VALUES (?, ?, ?, ?)",
-      [studentId, senderId, body && body.length > 0 ? body : null, attachmentId ?? null]
+      "INSERT INTO chat_messages (student_id, staff_id, sender_id, body, attachment_id) VALUES (?, ?, ?, ?, ?)",
+      [studentId, staffId, senderId, body && body.length > 0 ? body : null, attachmentId ?? null]
     );
     if (attachmentId !== undefined) await conn.query("UPDATE chat_attachments SET message_id = ? WHERE id = ?", [result.insertId, attachmentId]);
     await conn.commit();
@@ -206,6 +246,7 @@ export async function addMessage(studentId: number, senderId: number, body: stri
 
 interface AttachmentRow extends RowDataPacket {
   student_id: number;
+  staff_id: number;
   file_name: string;
 }
 interface ChunkRow extends RowDataPacket {
@@ -214,56 +255,59 @@ interface ChunkRow extends RowDataPacket {
 
 /** A shared file (only once it is attached to a message), put back together from its pieces. */
 export async function getAttachment(id: number) {
-  const [rows] = await pool.query<AttachmentRow[]>("SELECT student_id, file_name FROM chat_attachments WHERE id = ? AND message_id IS NOT NULL", [id]);
+  const [rows] = await pool.query<AttachmentRow[]>("SELECT student_id, staff_id, file_name FROM chat_attachments WHERE id = ? AND message_id IS NOT NULL", [id]);
   if (rows.length === 0) return null;
   const [chunks] = await pool.query<ChunkRow[]>("SELECT data FROM chat_attachment_chunks WHERE attachment_id = ? ORDER BY seq", [id]);
   return { ...rows[0], data: Buffer.concat(chunks.map((c) => c.data)) };
 }
 
-/** Unread messages for the tutors: students' messages no tutor has opened yet, across every conversation. */
-export async function unreadForTutors(userId: number) {
-  // The tutor's screen has received them (the badge is showing), even if nobody has opened the conversation.
+/** Unread messages for a tutor or admin: what students wrote to THIS person that they have not opened yet. */
+export async function unreadForStaff(staffId: number) {
+  // The screen has received them (the badge is showing), even if the chat has not been opened.
   await pool.query(
-    `INSERT INTO chat_conversations (student_id, tutor_delivered_id)
-     SELECT student_id, MAX(id) FROM chat_messages GROUP BY student_id
-     ON DUPLICATE KEY UPDATE tutor_delivered_id = GREATEST(tutor_delivered_id, VALUES(tutor_delivered_id))`
+    `INSERT INTO chat_threads (student_id, staff_id, tutor_delivered_id)
+     SELECT student_id, staff_id, MAX(id) FROM chat_messages WHERE staff_id = ? GROUP BY student_id, staff_id
+     ON DUPLICATE KEY UPDATE tutor_delivered_id = GREATEST(tutor_delivered_id, VALUES(tutor_delivered_id))`,
+    [staffId]
   );
   const [rows] = await pool.query<RowDataPacket[]>(
     `SELECT COUNT(*) AS n FROM chat_messages m
-     LEFT JOIN chat_conversations c ON c.student_id = m.student_id
-     LEFT JOIN chat_clears cl ON cl.student_id = m.student_id AND cl.user_id = ?
-     WHERE m.sender_id = m.student_id AND m.deleted_at IS NULL AND m.id > GREATEST(COALESCE(c.tutor_read_id, 0), COALESCE(cl.cleared_id, 0))`,
-    [userId]
+     LEFT JOIN chat_threads c ON c.student_id = m.student_id AND c.staff_id = m.staff_id
+     LEFT JOIN chat_clears cl ON cl.student_id = m.student_id AND cl.staff_id = m.staff_id AND cl.user_id = ?
+     WHERE m.staff_id = ? AND m.sender_id = m.student_id AND m.deleted_at IS NULL
+       AND m.id > GREATEST(COALESCE(c.tutor_read_id, 0), COALESCE(cl.cleared_id, 0))`,
+    [staffId, staffId]
   );
   return Number(rows[0].n);
 }
 
-/** Unread messages for one student: what the tutors wrote that this student has not opened yet. */
+/** Unread messages for one student: what any tutor or admin wrote to them that they have not opened yet. */
 export async function unreadForStudent(studentId: number) {
   await pool.query(
-    `INSERT INTO chat_conversations (student_id, student_delivered_id)
-     SELECT ?, COALESCE(MAX(id), 0) FROM chat_messages WHERE student_id = ?
+    `INSERT INTO chat_threads (student_id, staff_id, student_delivered_id)
+     SELECT student_id, staff_id, MAX(id) FROM chat_messages WHERE student_id = ? GROUP BY student_id, staff_id
      ON DUPLICATE KEY UPDATE student_delivered_id = GREATEST(student_delivered_id, VALUES(student_delivered_id))`,
-    [studentId, studentId]
+    [studentId]
   );
   const [rows] = await pool.query<RowDataPacket[]>(
     `SELECT COUNT(*) AS n FROM chat_messages m
-     LEFT JOIN chat_conversations c ON c.student_id = m.student_id
-     LEFT JOIN chat_clears cl ON cl.student_id = m.student_id AND cl.user_id = ?
-     WHERE m.student_id = ? AND m.sender_id <> m.student_id AND m.deleted_at IS NULL AND m.id > GREATEST(COALESCE(c.student_read_id, 0), COALESCE(cl.cleared_id, 0))`,
+     LEFT JOIN chat_threads c ON c.student_id = m.student_id AND c.staff_id = m.staff_id
+     LEFT JOIN chat_clears cl ON cl.student_id = m.student_id AND cl.staff_id = m.staff_id AND cl.user_id = ?
+     WHERE m.student_id = ? AND m.sender_id <> m.student_id AND m.deleted_at IS NULL
+       AND m.id > GREATEST(COALESCE(c.student_read_id, 0), COALESCE(cl.cleared_id, 0))`,
     [studentId, studentId]
   );
   return Number(rows[0].n);
 }
 
-/** Deletes one of your OWN messages for everyone: the text and file go, a "deleted" note stays. False if it is not yours. */
-export async function deleteMessage(studentId: number, messageId: number, userId: number) {
+/** Deletes one of your OWN messages for both people: the text and file go, a "deleted" note stays. False if it is not yours. */
+export async function deleteMessage({ studentId, staffId }: Pair, messageId: number, userId: number) {
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
     const [mine] = await conn.query<RowDataPacket[]>(
-      "SELECT id FROM chat_messages WHERE id = ? AND student_id = ? AND sender_id = ? AND deleted_at IS NULL FOR UPDATE",
-      [messageId, studentId, userId]
+      "SELECT id FROM chat_messages WHERE id = ? AND student_id = ? AND staff_id = ? AND sender_id = ? AND deleted_at IS NULL FOR UPDATE",
+      [messageId, studentId, staffId, userId]
     );
     if (mine.length === 0) {
       await conn.rollback();
@@ -281,33 +325,36 @@ export async function deleteMessage(studentId: number, messageId: number, userId
   }
 }
 
-/** The newest message id in a conversation (0 when empty). */
-async function newestId(studentId: number) {
-  const [rows] = await pool.query<RowDataPacket[]>("SELECT COALESCE(MAX(id), 0) AS id FROM chat_messages WHERE student_id = ?", [studentId]);
+/** The newest message id in a chat (0 when empty). */
+async function newestId({ studentId, staffId }: Pair) {
+  const [rows] = await pool.query<RowDataPacket[]>("SELECT COALESCE(MAX(id), 0) AS id FROM chat_messages WHERE student_id = ? AND staff_id = ?", [studentId, staffId]);
   return Number(rows[0].id);
 }
 
-/** Clear chat: empties the chat on THIS person's screen only. The other side keeps everything. */
-export async function clearChat(studentId: number, userId: number) {
+/** Clear chat: empties the chat on THIS person's screen only. The other person keeps everything. */
+export async function clearChat(pair: Pair, userId: number) {
   await pool.query(
-    "INSERT INTO chat_clears (student_id, user_id, cleared_id) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE cleared_id = GREATEST(cleared_id, VALUES(cleared_id))",
-    [studentId, userId, await newestId(studentId)]
+    "INSERT INTO chat_clears (student_id, staff_id, user_id, cleared_id) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE cleared_id = GREATEST(cleared_id, VALUES(cleared_id))",
+    [pair.studentId, pair.staffId, userId, await newestId(pair)]
   );
 }
 
-/** Delete chat: removes the whole conversation and every file for everyone. This cannot be undone. */
-export async function deleteChat(studentId: number) {
+/** Delete chat: removes this chat (and its files) for both people. Other chats of the same student or tutor are untouched. */
+export async function deleteChat({ studentId, staffId }: Pair) {
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
-    const [newest] = await conn.query<RowDataPacket[]>("SELECT COALESCE(MAX(id), 0) AS id FROM chat_messages WHERE student_id = ? FOR UPDATE", [studentId]);
-    await conn.query("DELETE FROM chat_messages WHERE student_id = ?", [studentId]);
-    await conn.query("DELETE FROM chat_attachments WHERE student_id = ?", [studentId]); // including files that were uploaded but never sent
-    await conn.query("DELETE FROM chat_clears WHERE student_id = ?", [studentId]);
+    const [newest] = await conn.query<RowDataPacket[]>(
+      "SELECT COALESCE(MAX(id), 0) AS id FROM chat_messages WHERE student_id = ? AND staff_id = ? FOR UPDATE",
+      [studentId, staffId]
+    );
+    await conn.query("DELETE FROM chat_messages WHERE student_id = ? AND staff_id = ?", [studentId, staffId]);
+    await conn.query("DELETE FROM chat_attachments WHERE student_id = ? AND staff_id = ?", [studentId, staffId]); // including files uploaded but never sent
+    await conn.query("DELETE FROM chat_clears WHERE student_id = ? AND staff_id = ?", [studentId, staffId]);
     // Screens that still show old messages learn from wiped_id that they must drop them.
     await conn.query(
-      "INSERT INTO chat_conversations (student_id, wiped_id) VALUES (?, ?) ON DUPLICATE KEY UPDATE wiped_id = GREATEST(wiped_id, VALUES(wiped_id))",
-      [studentId, Number(newest[0].id)]
+      "INSERT INTO chat_threads (student_id, staff_id, wiped_id) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE wiped_id = GREATEST(wiped_id, VALUES(wiped_id))",
+      [studentId, staffId, Number(newest[0].id)]
     );
     await conn.commit();
   } catch (err) {
