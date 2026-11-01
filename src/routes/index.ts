@@ -4,6 +4,7 @@ import healthRoutes from "../modules/health/health.routes.js";
 import authRoutes from "../modules/auth/auth.routes.js";
 import subjectRoutes from "../modules/subjects/subject.routes.js";
 import itemRoutes from "../modules/items/item.routes.js";
+import chatRoutes from "../modules/chat/chat.routes.js";
 import studentRoutes from "../modules/student/student.routes.js";
 import tutorRoutes from "../modules/tutor/tutor.routes.js";
 
@@ -17,6 +18,7 @@ router.use("/subjects", subjectRoutes); // read-only school subjects/topics, sho
 // Everything below needs a logged-in user (secure by default).
 router.use(authenticate);
 router.use("/items", itemRoutes);
+router.use("/chat", chatRoutes); // students and tutors talk to each other (the role decides what each can reach)
 router.use("/student", studentRoutes); // the student workflow (students only; checked inside)
 router.use("/tutor", tutorRoutes); // each route inside checks the role (tutor / admin)
 

@@ -11,6 +11,7 @@ interface RoleCountRow extends RowDataPacket {
 }
 interface AccountRow extends RowDataPacket {
   id: number;
+  full_name: string;
   email: string;
   role: Role;
   created_at: Date;
@@ -37,14 +38,14 @@ export async function overview() {
 // idx_users_role_created (role, created_at) finds these rows already in order - no sorting needed.
 export async function listStudents() {
   const [rows] = await pool.query<AccountRow[]>(
-    "SELECT id, email, created_at FROM users WHERE role = 'student' ORDER BY created_at DESC, id DESC LIMIT 500"
+    "SELECT id, full_name, email, created_at FROM users WHERE role = 'student' ORDER BY created_at DESC, id DESC LIMIT 500"
   );
   return rows;
 }
 
 export async function listTutor() {
   const [rows] = await pool.query<AccountRow[]>(
-    "SELECT id, email, role, created_at FROM users WHERE role IN ('tutor', 'admin') ORDER BY role, created_at DESC, id DESC LIMIT 500"
+    "SELECT id, full_name, email, role, created_at FROM users WHERE role IN ('tutor', 'admin') ORDER BY role, created_at DESC, id DESC LIMIT 500"
   );
   return rows;
 }

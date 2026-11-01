@@ -2,6 +2,7 @@ import { Router } from "express";
 import { requireRole } from "../../middleware/requireRole/index.js";
 import diagnosticRoutes from "../diagnostic/diagnostic.routes.js";
 import startupContentRoutes from "../startup/content.routes.js";
+import { tutorReportRoutes } from "../monthlyReport/monthlyReport.routes.js";
 import startupRoutes from "../startup/startup.routes.js";
 import { getOverview, getStudents, getTutorAccounts } from "./tutor.controller.js";
 
@@ -20,5 +21,8 @@ router.use("/startup-content", startupContentRoutes);
 
 // Diagnostic questions written by tutors (tutor / admin; checked inside).
 router.use("/diagnostic-questions", diagnosticRoutes);
+
+// Monthly progress reports a tutor sends to a student (tutor / admin; checked inside).
+router.use("/monthly-reports", tutorReportRoutes);
 
 export default router;
