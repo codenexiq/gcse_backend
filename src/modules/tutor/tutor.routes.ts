@@ -4,6 +4,7 @@ import { rawImage } from "../../middleware/rawImage/index.js";
 import { validate } from "../../middleware/validate/index.js";
 import diagnosticRoutes from "../diagnostic/diagnostic.routes.js";
 import startupContentRoutes from "../startup/content.routes.js";
+import lessonLogRoutes from "../lessonLog/lessonLog.routes.js";
 import { tutorReportRoutes } from "../monthlyReport/monthlyReport.routes.js";
 import startupRoutes from "../startup/startup.routes.js";
 import { bulkStudents, checkUsername, createStudent, deleteStudent, getOverview, getStudentProfile, getStudents, getTutorAccounts, removeStudentImage, updateStudent, uploadStudentImage } from "./tutor.controller.js";
@@ -37,5 +38,8 @@ router.use("/diagnostic-questions", diagnosticRoutes);
 
 // Monthly progress reports a tutor sends to a student (tutor / admin; checked inside).
 router.use("/monthly-reports", tutorReportRoutes);
+
+// The attendance and feedback form a tutor fills in after each lesson (tutor / admin; checked inside).
+router.use("/lesson-logs", lessonLogRoutes);
 
 export default router;
