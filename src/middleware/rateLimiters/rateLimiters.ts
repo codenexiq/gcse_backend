@@ -35,3 +35,11 @@ export const chatWriteLimiter = rateLimit({
   limit: 60,
   message: { message: "You are sending too fast, please wait a moment" },
 });
+
+// Profile pages and picture uploads: 60 a minute per IP.
+export const profileLimiter = rateLimit({
+  ...base,
+  windowMs: 60 * 1000,
+  limit: 60,
+  message: { message: "Too many requests, please wait a moment" },
+});

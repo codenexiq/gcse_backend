@@ -1,6 +1,7 @@
 import type { ResultSetHeader, RowDataPacket } from "mysql2";
 import { pool } from "../../config/db/index.js";
 import type { Role } from "../auth/user.model.js";
+import { DELETE_FOR_EVERYONE_SECONDS } from "./chat.schemas.js";
 
 // A chat belongs to ONE student and ONE tutor/admin (staff). Two admins talking to the same student have two separate chats.
 export interface Pair {
@@ -19,6 +20,7 @@ interface ConversationRow extends RowDataPacket {
   full_name: string;
   email: string;
   role: Role;
+  avatar_v: number | null;
   last_body: string | null;
   last_has_file: number | null;
   last_at: Date | null;
@@ -37,6 +39,8 @@ function toConversations(rows: ConversationRow[]) {
       fullName: r.full_name,
       email: r.email,
       peerRole: r.role,
+      /** Changes whenever the person's profile picture changes; null when they have none. */
+      avatarVersion: r.avatar_v ? Number(r.avatar_v) : null,
       lastBody: shown ? (r.last_deleted ? "This message was deleted" : r.last_body) : null,
       lastHasFile: shown && !r.last_deleted && Boolean(r.last_has_file),
       lastAt: shown ? r.last_at : null,
@@ -45,7 +49,7 @@ function toConversations(rows: ConversationRow[]) {
   });
 }
 
-/** A tutor's or admin's list: every student, with THIS person's chat with them. */
+/** A tutor's or admin's list: only the students THIS person already has a chat with (new chats start from a search). */
 export async function listForStaff(staffId: number) {
   // The inbox has loaded: the students' messages to this person are now delivered.
   await pool.query(
@@ -55,18 +59,21 @@ export async function listForStaff(staffId: number) {
     [staffId]
   );
   const [rows] = await pool.query<ConversationRow[]>(
-    `SELECT u.id AS peer_id, u.full_name, u.email, u.role, lm.body AS last_body, (lm.attachment_id IS NOT NULL) AS last_has_file, lm.created_at AS last_at,
+    `SELECT u.id AS peer_id, u.full_name, u.email, u.role,
+       (SELECT UNIX_TIMESTAMP(updated_at) FROM user_images WHERE user_id = u.id AND kind = 'avatar') AS avatar_v,
+       lm.body AS last_body, (lm.attachment_id IS NOT NULL) AS last_has_file, lm.created_at AS last_at,
        lm.id AS last_id, (lm.deleted_at IS NOT NULL) AS last_deleted, COALESCE(cl.cleared_id, 0) AS cleared,
        (SELECT COUNT(*) FROM chat_messages m WHERE m.student_id = u.id AND m.staff_id = ? AND m.sender_id = u.id AND m.deleted_at IS NULL
-          AND m.id > GREATEST(COALESCE(c.tutor_read_id, 0), COALESCE(cl.cleared_id, 0))) AS unread
+          AND m.id > GREATEST(COALESCE(c.tutor_read_id, 0), COALESCE(cl.cleared_id, 0))
+          AND NOT EXISTS (SELECT 1 FROM chat_message_hides h WHERE h.message_id = m.id AND h.user_id = ?)) AS unread
      FROM users u
      LEFT JOIN chat_threads c ON c.student_id = u.id AND c.staff_id = ?
      LEFT JOIN chat_clears cl ON cl.student_id = u.id AND cl.staff_id = ? AND cl.user_id = ?
-     LEFT JOIN chat_messages lm ON lm.id = (SELECT MAX(id) FROM chat_messages WHERE student_id = u.id AND staff_id = ?)
-     WHERE u.role = 'student'
-     ORDER BY (lm.id IS NULL), lm.id DESC, u.full_name
+     LEFT JOIN chat_messages lm ON lm.id = (SELECT MAX(m.id) FROM chat_messages m WHERE m.student_id = u.id AND m.staff_id = ? AND NOT EXISTS (SELECT 1 FROM chat_message_hides h WHERE h.message_id = m.id AND h.user_id = ?))
+     WHERE u.role = 'student' AND lm.id IS NOT NULL
+     ORDER BY lm.id DESC, u.full_name
      LIMIT 500`,
-    [staffId, staffId, staffId, staffId, staffId]
+    [staffId, staffId, staffId, staffId, staffId, staffId, staffId]
   );
   return toConversations(rows);
 }
@@ -80,18 +87,21 @@ export async function listForStudent(studentId: number) {
     [studentId]
   );
   const [rows] = await pool.query<ConversationRow[]>(
-    `SELECT u.id AS peer_id, u.full_name, u.email, u.role, lm.body AS last_body, (lm.attachment_id IS NOT NULL) AS last_has_file, lm.created_at AS last_at,
+    `SELECT u.id AS peer_id, u.full_name, u.email, u.role,
+       (SELECT UNIX_TIMESTAMP(updated_at) FROM user_images WHERE user_id = u.id AND kind = 'avatar') AS avatar_v,
+       lm.body AS last_body, (lm.attachment_id IS NOT NULL) AS last_has_file, lm.created_at AS last_at,
        lm.id AS last_id, (lm.deleted_at IS NOT NULL) AS last_deleted, COALESCE(cl.cleared_id, 0) AS cleared,
        (SELECT COUNT(*) FROM chat_messages m WHERE m.student_id = ? AND m.staff_id = u.id AND m.sender_id = u.id AND m.deleted_at IS NULL
-          AND m.id > GREATEST(COALESCE(c.student_read_id, 0), COALESCE(cl.cleared_id, 0))) AS unread
+          AND m.id > GREATEST(COALESCE(c.student_read_id, 0), COALESCE(cl.cleared_id, 0))
+          AND NOT EXISTS (SELECT 1 FROM chat_message_hides h WHERE h.message_id = m.id AND h.user_id = ?)) AS unread
      FROM users u
      LEFT JOIN chat_threads c ON c.student_id = ? AND c.staff_id = u.id
      LEFT JOIN chat_clears cl ON cl.student_id = ? AND cl.staff_id = u.id AND cl.user_id = ?
-     LEFT JOIN chat_messages lm ON lm.id = (SELECT MAX(id) FROM chat_messages WHERE student_id = ? AND staff_id = u.id)
+     LEFT JOIN chat_messages lm ON lm.id = (SELECT MAX(m.id) FROM chat_messages m WHERE m.student_id = ? AND m.staff_id = u.id AND NOT EXISTS (SELECT 1 FROM chat_message_hides h WHERE h.message_id = m.id AND h.user_id = ?))
      WHERE u.role IN ('tutor', 'admin')
      ORDER BY (lm.id IS NULL), lm.id DESC, u.full_name
      LIMIT 500`,
-    [studentId, studentId, studentId, studentId, studentId]
+    [studentId, studentId, studentId, studentId, studentId, studentId, studentId]
   );
   return toConversations(rows);
 }
@@ -104,9 +114,15 @@ interface MessageRow extends RowDataPacket {
   body: string | null;
   created_at: Date;
   deleted: number;
+  age: number;
   att_id: number | null;
   file_name: string | null;
   size: number | null;
+  r_id: number | null;
+  r_name: string | null;
+  r_body: string | null;
+  r_deleted: number | null;
+  r_file: string | null;
 }
 
 interface PointerRow extends RowDataPacket {
@@ -152,13 +168,18 @@ export async function listMessages(pair: Pair, afterId: number, viewer: "student
   const cleared = await clearedUpTo(pair, userId);
   const from = Math.max(afterId, cleared);
   const [rows] = await pool.query<MessageRow[]>(
-    `SELECT m.id, m.sender_id, u.full_name, u.role, m.body, m.created_at, (m.deleted_at IS NOT NULL) AS deleted, a.id AS att_id, a.file_name, a.size
+    `SELECT m.id, m.sender_id, u.full_name, u.role, m.body, m.created_at, (m.deleted_at IS NOT NULL) AS deleted, TIMESTAMPDIFF(SECOND, m.created_at, NOW()) AS age, a.id AS att_id, a.file_name, a.size,
+       rm.id AS r_id, ru.full_name AS r_name, rm.body AS r_body, (rm.deleted_at IS NOT NULL) AS r_deleted, ra.file_name AS r_file
      FROM chat_messages m
      JOIN users u ON u.id = m.sender_id
      LEFT JOIN chat_attachments a ON a.id = m.attachment_id
+     LEFT JOIN chat_messages rm ON rm.id = m.reply_to_id
+     LEFT JOIN users ru ON ru.id = rm.sender_id
+     LEFT JOIN chat_attachments ra ON ra.id = rm.attachment_id
      WHERE m.student_id = ? AND m.staff_id = ? AND m.id > ?
+       AND NOT EXISTS (SELECT 1 FROM chat_message_hides h WHERE h.message_id = m.id AND h.user_id = ?)
      ORDER BY m.id ${latest ? "DESC" : "ASC"} LIMIT 200`,
-    [studentId, staffId, from]
+    [studentId, staffId, from, userId]
   );
   // Messages deleted by their sender, so a screen that already has them can show "deleted" instead.
   const [gone] = await pool.query<RowDataPacket[]>(
@@ -183,7 +204,14 @@ export async function listMessages(pair: Pair, afterId: number, viewer: "student
       body: r.body,
       createdAt: r.created_at,
       deleted: Boolean(r.deleted),
+      /** Seconds left in which the sender can still "delete for everyone" (0 = no longer possible). */
+      windowLeft: Math.max(0, DELETE_FOR_EVERYONE_SECONDS - Number(r.age)),
       attachment: r.att_id === null ? null : { id: r.att_id, name: r.file_name as string, size: Number(r.size) },
+      /** The message this one answers, as a short quote (the text is left out if that message was deleted for everyone). */
+      replyTo:
+        r.r_id === null
+          ? null
+          : { id: r.r_id, senderName: r.r_name as string, body: r.r_deleted ? null : r.r_body, fileName: r.r_deleted ? null : r.r_file, deleted: Boolean(r.r_deleted) },
     })),
     deletedIds: gone.map((g) => Number(g.id)),
     pointers: await getPointers(pair),
@@ -215,7 +243,7 @@ export async function saveAttachment({ studentId, staffId }: Pair, uploadedBy: n
 }
 
 /** Adds a message. The file (if any) must be one this person just uploaded to this chat and not used yet. */
-export async function addMessage({ studentId, staffId }: Pair, senderId: number, body: string | undefined, attachmentId: number | undefined) {
+export async function addMessage({ studentId, staffId }: Pair, senderId: number, body: string | undefined, attachmentId: number | undefined, replyToId?: number) {
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
@@ -229,9 +257,20 @@ export async function addMessage({ studentId, staffId }: Pair, senderId: number,
         return null;
       }
     }
+    if (replyToId !== undefined) {
+      // You can only answer a message of this same chat (and not one that was deleted for everyone).
+      const [original] = await conn.query<RowDataPacket[]>(
+        "SELECT id FROM chat_messages WHERE id = ? AND student_id = ? AND staff_id = ? AND deleted_at IS NULL",
+        [replyToId, studentId, staffId]
+      );
+      if (original.length === 0) {
+        await conn.rollback();
+        return null;
+      }
+    }
     const [result] = await conn.query<ResultSetHeader>(
-      "INSERT INTO chat_messages (student_id, staff_id, sender_id, body, attachment_id) VALUES (?, ?, ?, ?, ?)",
-      [studentId, staffId, senderId, body && body.length > 0 ? body : null, attachmentId ?? null]
+      "INSERT INTO chat_messages (student_id, staff_id, sender_id, body, attachment_id, reply_to_id) VALUES (?, ?, ?, ?, ?, ?)",
+      [studentId, staffId, senderId, body && body.length > 0 ? body : null, attachmentId ?? null, replyToId ?? null]
     );
     if (attachmentId !== undefined) await conn.query("UPDATE chat_attachments SET message_id = ? WHERE id = ?", [result.insertId, attachmentId]);
     await conn.commit();
@@ -245,8 +284,10 @@ export async function addMessage({ studentId, staffId }: Pair, senderId: number,
 }
 
 interface AttachmentRow extends RowDataPacket {
-  student_id: number;
-  staff_id: number;
+  student_id: number | null;
+  staff_id: number | null;
+  /** Set for a file shared in a group chat (then there is no student and staff member). */
+  group_id: number | null;
   file_name: string;
 }
 interface ChunkRow extends RowDataPacket {
@@ -255,7 +296,7 @@ interface ChunkRow extends RowDataPacket {
 
 /** A shared file (only once it is attached to a message), put back together from its pieces. */
 export async function getAttachment(id: number) {
-  const [rows] = await pool.query<AttachmentRow[]>("SELECT student_id, staff_id, file_name FROM chat_attachments WHERE id = ? AND message_id IS NOT NULL", [id]);
+  const [rows] = await pool.query<AttachmentRow[]>("SELECT student_id, staff_id, group_id, file_name FROM chat_attachments WHERE id = ? AND message_id IS NOT NULL", [id]);
   if (rows.length === 0) return null;
   const [chunks] = await pool.query<ChunkRow[]>("SELECT data FROM chat_attachment_chunks WHERE attachment_id = ? ORDER BY seq", [id]);
   return { ...rows[0], data: Buffer.concat(chunks.map((c) => c.data)) };
@@ -275,8 +316,9 @@ export async function unreadForStaff(staffId: number) {
      LEFT JOIN chat_threads c ON c.student_id = m.student_id AND c.staff_id = m.staff_id
      LEFT JOIN chat_clears cl ON cl.student_id = m.student_id AND cl.staff_id = m.staff_id AND cl.user_id = ?
      WHERE m.staff_id = ? AND m.sender_id = m.student_id AND m.deleted_at IS NULL
-       AND m.id > GREATEST(COALESCE(c.tutor_read_id, 0), COALESCE(cl.cleared_id, 0))`,
-    [staffId, staffId]
+       AND m.id > GREATEST(COALESCE(c.tutor_read_id, 0), COALESCE(cl.cleared_id, 0))
+       AND NOT EXISTS (SELECT 1 FROM chat_message_hides h WHERE h.message_id = m.id AND h.user_id = ?)`,
+    [staffId, staffId, staffId]
   );
   return Number(rows[0].n);
 }
@@ -294,35 +336,51 @@ export async function unreadForStudent(studentId: number) {
      LEFT JOIN chat_threads c ON c.student_id = m.student_id AND c.staff_id = m.staff_id
      LEFT JOIN chat_clears cl ON cl.student_id = m.student_id AND cl.staff_id = m.staff_id AND cl.user_id = ?
      WHERE m.student_id = ? AND m.sender_id <> m.student_id AND m.deleted_at IS NULL
-       AND m.id > GREATEST(COALESCE(c.student_read_id, 0), COALESCE(cl.cleared_id, 0))`,
-    [studentId, studentId]
+       AND m.id > GREATEST(COALESCE(c.student_read_id, 0), COALESCE(cl.cleared_id, 0))
+       AND NOT EXISTS (SELECT 1 FROM chat_message_hides h WHERE h.message_id = m.id AND h.user_id = ?)`,
+    [studentId, studentId, studentId]
   );
   return Number(rows[0].n);
 }
 
-/** Deletes one of your OWN messages for both people: the text and file go, a "deleted" note stays. False if it is not yours. */
-export async function deleteMessage({ studentId, staffId }: Pair, messageId: number, userId: number) {
+/**
+ * "Delete for everyone": removes one of your OWN messages for both people (the text and file go, a "deleted" note stays).
+ * Only possible in the first 10 minutes after sending. Returns "ok", "missing" (not found / not yours) or "expired".
+ */
+export async function deleteForEveryone({ studentId, staffId }: Pair, messageId: number, userId: number): Promise<"ok" | "missing" | "expired"> {
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
     const [mine] = await conn.query<RowDataPacket[]>(
-      "SELECT id FROM chat_messages WHERE id = ? AND student_id = ? AND staff_id = ? AND sender_id = ? AND deleted_at IS NULL FOR UPDATE",
+      "SELECT TIMESTAMPDIFF(SECOND, created_at, NOW()) AS age FROM chat_messages WHERE id = ? AND student_id = ? AND staff_id = ? AND sender_id = ? AND deleted_at IS NULL FOR UPDATE",
       [messageId, studentId, staffId, userId]
     );
     if (mine.length === 0) {
       await conn.rollback();
-      return false;
+      return "missing";
+    }
+    if (Number(mine[0].age) > DELETE_FOR_EVERYONE_SECONDS) {
+      await conn.rollback();
+      return "expired";
     }
     await conn.query("UPDATE chat_messages SET deleted_at = NOW(), body = NULL, attachment_id = NULL WHERE id = ?", [messageId]);
-    await conn.query("DELETE FROM chat_attachments WHERE message_id = ?", [messageId]); // its pieces go with it
+    await conn.query("DELETE FROM chat_attachments WHERE message_id = ? AND group_id IS NULL", [messageId]); // its pieces go with it
     await conn.commit();
-    return true;
+    return "ok";
   } catch (err) {
     await conn.rollback();
     throw err;
   } finally {
     conn.release();
   }
+}
+
+/** "Delete for me": hides any message of this chat (yours or theirs) from YOUR view only. The other person keeps it. */
+export async function deleteForMe({ studentId, staffId }: Pair, messageId: number, userId: number) {
+  const [found] = await pool.query<RowDataPacket[]>("SELECT id FROM chat_messages WHERE id = ? AND student_id = ? AND staff_id = ?", [messageId, studentId, staffId]);
+  if (found.length === 0) return false;
+  await pool.query("INSERT IGNORE INTO chat_message_hides (message_id, user_id) VALUES (?, ?)", [messageId, userId]);
+  return true;
 }
 
 /** The newest message id in a chat (0 when empty). */
@@ -363,4 +421,67 @@ export async function deleteChat({ studentId, staffId }: Pair) {
   } finally {
     conn.release();
   }
+}
+
+/**
+ * Finds students by name or email, so a tutor or admin can start a chat with one. There is no way to list every student:
+ * the search needs at least 2 characters and gives at most 20 people.
+ */
+export async function searchStudents(query: string) {
+  const text = query.trim();
+  if (text.length < 2) return [];
+  // The person's own % and _ are plain letters, not wildcards.
+  const like = `%${text.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+  const [rows] = await pool.query<RowDataPacket[]>(
+    "SELECT id, full_name, email FROM users WHERE role = 'student' AND (full_name LIKE ? OR email LIKE ?) ORDER BY full_name, id LIMIT 20",
+    [like, like]
+  );
+  return rows.map((r) => ({ peerId: Number(r.id), fullName: r.full_name as string, email: r.email as string, peerRole: "student" as const, lastBody: null, lastHasFile: false, lastAt: null, unread: 0 }));
+}
+
+interface PeerRow extends RowDataPacket {
+  id: number;
+  full_name: string;
+  role: Role;
+  username: string | null;
+  headline: string | null;
+  location: string | null;
+  bio: string | null;
+  user_code: string | null;
+  email: string;
+  phone: string | null;
+  gender: string | null;
+  created_at: Date;
+  is_active: number;
+  avatar_v: number | null;
+  cover_v: number | null;
+}
+
+/**
+ * What the contact card beside a chat shows about the other person.
+ * `full` is for a tutor or admin looking at a STUDENT: then it has every detail (ID, email, phone ...).
+ * A student looking at a tutor or admin only gets what that person put on their profile to be seen: no email, no phone number.
+ */
+export async function getPeerCard(id: number, full: boolean) {
+  const [rows] = await pool.query<PeerRow[]>(
+    `SELECT u.id, u.full_name, u.role, u.username, u.headline, u.location, u.bio, u.user_code, u.email, u.phone, u.gender, u.created_at, u.is_active,
+       (SELECT UNIX_TIMESTAMP(updated_at) FROM user_images WHERE user_id = u.id AND kind = 'avatar') AS avatar_v,
+       (SELECT UNIX_TIMESTAMP(updated_at) FROM user_images WHERE user_id = u.id AND kind = 'cover') AS cover_v
+     FROM users u WHERE u.id = ?`,
+    [id]
+  );
+  const r = rows[0];
+  if (!r) return null;
+  return {
+    id: r.id,
+    fullName: r.full_name,
+    role: r.role,
+    username: r.username ?? "",
+    headline: r.headline ?? "",
+    location: r.location ?? "",
+    bio: r.bio ?? "",
+    avatarVersion: r.avatar_v ? Number(r.avatar_v) : null,
+    coverVersion: r.cover_v ? Number(r.cover_v) : null,
+    ...(full ? { userCode: r.user_code, email: r.email, phone: r.phone ?? "", gender: r.gender ?? "", createdAt: r.created_at, isActive: Boolean(r.is_active) } : {}),
+  };
 }

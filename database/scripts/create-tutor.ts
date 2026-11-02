@@ -59,9 +59,13 @@ try {
 
   const password = generatePassword();
   const passwordHash = await bcrypt.hash(password, 12);
-  await db.query("INSERT INTO users (full_name, email, password_hash, role) VALUES (?, ?, ?, ?)", [fullName, email, passwordHash, role]);
+  const [inserted] = await db.query<import("mysql2").ResultSetHeader>("INSERT INTO users (full_name, email, password_hash, role) VALUES (?, ?, ?, ?)", [fullName, email, passwordHash, role]);
+  // The unique User ID: TUT-00002 for a tutor, ADM-00001 for an admin (made from the account number).
+  const userId = `${role === "admin" ? "ADM" : "TUT"}-${String(inserted.insertId).padStart(5, "0")}`;
+  await db.query("UPDATE users SET user_code = ? WHERE id = ?", [userId, inserted.insertId]);
 
   console.log(`\nCreated ${role} account in "${dbName}":`);
+  console.log(`  User ID:  ${userId}`);
   console.log(`  Name:     ${fullName}`);
   console.log(`  Email:    ${email}`);
   console.log(`  Password: ${password}`);

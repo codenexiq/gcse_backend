@@ -22,7 +22,7 @@ const cookieOptions = {
   path: "/",
 } as const; // never sent on cross-site requests
 
-function startSession(res: Response, user: { id: number }) {
+export function startSession(res: Response, user: { id: number }) {
   const token = jwt.sign({ sub: String(user.id) }, env.jwtSecret, {
     algorithm: "HS256",
     expiresIn: `${env.sessionHours}h`,
@@ -52,6 +52,7 @@ export async function login(req: Request, res: Response, next: NextFunction) {
     const ok = await bcrypt.compare(password, user ? user.password_hash : DUMMY_HASH);
     // Same message for "no such email" and "wrong password" - do not help attackers.
     if (!user || !ok) throw new AppError(401, "Invalid email or password");
+    if (!user.is_active) throw new AppError(403, "This account is inactive. Please contact your tutor.");
     // The password was right, so it is safe to say where this account should sign in instead.
     if (user.role !== "student") throw new AppError(403, "This is a tutor account. Please use the tutor sign-in.");
 
@@ -71,6 +72,7 @@ export async function tutorLogin(req: Request, res: Response, next: NextFunction
     // A student using the tutor form gets the exact same answer (and takes the same time) as a wrong
     // password, so nobody can find out which emails belong to tutor.
     if (!user || !ok || !TUTOR_ROLES.includes(user.role)) throw new AppError(401, "Invalid email or password");
+    if (!user.is_active) throw new AppError(403, "This account is inactive.");
 
     startSession(res, user);
     res.json({ user: { id: user.id, fullName: user.full_name, email: user.email, role: user.role } });

@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import { AppError } from "../../utils/AppError/index.js";
+import * as Groups from "../chatGroup/chatGroup.model.js";
 import * as Chat from "./chat.model.js";
 import type { Pair } from "./chat.model.js";
 import { ALLOWED_EXTENSIONS, MAX_FILE_BYTES } from "./chat.schemas.js";
@@ -45,7 +46,7 @@ export async function readMessages(req: Request, res: Response, next: NextFuncti
 export async function postMessage(req: Request, res: Response, next: NextFunction) {
   try {
     const pair = await pairOf(req, req.body.peerId);
-    const id = await Chat.addMessage(pair, req.user!.id, req.body.body, req.body.attachmentId);
+    const id = await Chat.addMessage(pair, req.user!.id, req.body.body, req.body.attachmentId, req.body.replyToId);
     if (id === null) throw new AppError(400, "That file could not be attached. Please upload it again.");
     res.status(201).json({ id });
   } catch (err) {
@@ -85,9 +86,10 @@ export async function downloadAttachment(req: Request, res: Response, next: Next
     if (!Number.isInteger(id) || id <= 0) throw new AppError(404, "File not found");
     const file = await Chat.getAttachment(id);
     // Only the two people in that chat can open the file (another tutor or admin cannot).
+    // A file shared in a group can be opened by whoever may open that group.
     const user = req.user!;
-    const inChat = file && (user.role === "student" ? file.student_id === user.id : file.staff_id === user.id);
-    if (!file || !inChat) throw new AppError(404, "File not found");
+    const allowed = file && (file.group_id !== null ? await Groups.canAccess(user, file.group_id) : user.role === "student" ? file.student_id === user.id : file.staff_id === user.id);
+    if (!file || !allowed) throw new AppError(404, "File not found");
     res.setHeader("Content-Type", "application/octet-stream");
     res.setHeader("Content-Disposition", `attachment; filename*=UTF-8''${encodeURIComponent(file.file_name)}`);
     res.setHeader("X-Content-Type-Options", "nosniff");
@@ -98,23 +100,61 @@ export async function downloadAttachment(req: Request, res: Response, next: Next
   }
 }
 
-/** The number for the red badge on the sidebar's Messages button. */
-export async function unreadCount(req: Request, res: Response, next: NextFunction) {
+/** Tutors and admins only: search for a student to start a chat with. */
+export async function findStudents(req: Request, res: Response, next: NextFunction) {
   try {
-    const user = req.user!;
-    res.json({ count: user.role === "student" ? await Chat.unreadForStudent(user.id) : await Chat.unreadForStaff(user.id) });
+    res.json(await Chat.searchStudents(String(req.query.q ?? "").slice(0, 100)));
   } catch (err) {
     next(err);
   }
 }
 
-/** Delete one of your own messages (for both people). */
+/** The other person's card, shown beside the chat. Only for someone you can actually chat with (a student sees tutors and admins; staff see students). */
+export async function readPeer(req: Request, res: Response, next: NextFunction) {
+  try {
+    const pair = await pairOf(req, req.query.with);
+    // Tutors and admins see all of a student's details; a student sees a tutor's or admin's public profile only.
+    const viewerIsStaff = req.user!.role !== "student";
+    const peer = await Chat.getPeerCard(viewerIsStaff ? pair.studentId : pair.staffId, viewerIsStaff);
+    if (!peer) throw new AppError(404, "Person not found");
+    res.json(peer);
+  } catch (err) {
+    next(err);
+  }
+}
+
+/** The number for the red badge on the sidebar's Messages button. */
+export async function unreadCount(req: Request, res: Response, next: NextFunction) {
+  try {
+    const user = req.user!;
+    // One-to-one chats and group chats both count towards the red badge.
+    const direct = user.role === "student" ? await Chat.unreadForStudent(user.id) : await Chat.unreadForStaff(user.id);
+    res.json({ count: direct + (await Groups.unreadTotal(user)) });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Delete a message. ?scope=me hides it from your own view only (any message in the chat).
+ * ?scope=everyone removes your OWN message for both people, but only in the first 10 minutes.
+ */
 export async function removeMessage(req: Request, res: Response, next: NextFunction) {
   try {
     const pair = await pairOf(req, req.query.with);
     const id = Number(req.params.id);
-    if (!Number.isInteger(id) || id <= 0 || !(await Chat.deleteMessage(pair, id, req.user!.id))) throw new AppError(404, "Message not found, or it is not yours to delete");
-    res.json({ deleted: true });
+    if (!Number.isInteger(id) || id <= 0) throw new AppError(404, "Message not found");
+    const scope = req.query.scope;
+    if (scope !== "me" && scope !== "everyone") throw new AppError(400, "Choose Delete for me or Delete for everyone");
+
+    if (scope === "me") {
+      if (!(await Chat.deleteForMe(pair, id, req.user!.id))) throw new AppError(404, "Message not found");
+      return void res.json({ deleted: true, scope });
+    }
+    const result = await Chat.deleteForEveryone(pair, id, req.user!.id);
+    if (result === "missing") throw new AppError(404, "Message not found, or it is not yours to delete for everyone");
+    if (result === "expired") throw new AppError(403, "You can only delete a message for everyone in the first 10 minutes after sending it. You can still delete it for yourself.");
+    res.json({ deleted: true, scope });
   } catch (err) {
     next(err);
   }
