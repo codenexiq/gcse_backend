@@ -72,6 +72,11 @@ export async function updateProfile(userId: number, f: ProfileInput) {
   );
 }
 
+/** Saves the colour of the chat area (null = back to the standard colour). */
+export async function setChatColor(userId: number, color: string | null) {
+  await pool.query("UPDATE users SET chat_color = ? WHERE id = ?", [color ? color.toLowerCase() : null, userId]);
+}
+
 export async function getPasswordHash(userId: number) {
   const [rows] = await pool.query<RowDataPacket[]>("SELECT password_hash FROM users WHERE id = ?", [userId]);
   return rows[0] ? (rows[0].password_hash as string) : null;

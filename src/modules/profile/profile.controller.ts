@@ -55,6 +55,16 @@ export async function checkUsername(req: Request, res: Response, next: NextFunct
   }
 }
 
+export async function saveChatColor(req: Request, res: Response, next: NextFunction) {
+  try {
+    const color = (req.body as { color: string | null }).color;
+    await Profile.setChatColor(req.user!.id, color);
+    res.json({ chatColor: color ? color.toLowerCase() : null });
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function changePassword(req: Request, res: Response, next: NextFunction) {
   try {
     const { currentPassword, newPassword } = req.body as PasswordInput;
@@ -101,7 +111,8 @@ export async function removeImage(req: Request, res: Response, next: NextFunctio
 
 /**
  * Someone's profile picture or cover photo. You can always see your own. A tutor or admin can see a STUDENT's,
- * and a student can see a TUTOR's or ADMIN's. Nobody else's: students cannot see each other's, and staff cannot see each other's.
+ * a student can see a TUTOR's or ADMIN's, and an ADMIN can see anyone's. Nobody else's: students cannot see each other's,
+ * and a tutor cannot see another tutor's or an admin's.
  */
 function sendUserImage(kind: ImageKind) {
   return async (req: Request, res: Response, next: NextFunction) => {
@@ -113,7 +124,8 @@ function sendUserImage(kind: ImageKind) {
         // Staff see students' pictures, and students see the pictures of tutors and admins (the people they chat with).
         // A student never sees another student's, and tutors and admins never see each other's.
         const role = await Profile.getRole(target);
-        const allowed = viewer.role === "student" ? role === "tutor" || role === "admin" : role === "student";
+        // An admin manages every account (the Tutor Accounts page), so an admin may see anyone's picture.
+        const allowed = viewer.role === "admin" ? role !== null : viewer.role === "student" ? role === "tutor" || role === "admin" : role === "student";
         // People who are in the same group chat may also see each other's pictures.
         if (!allowed && !(await shareGroup(viewer.id, target))) throw new AppError(404, "No picture");
       }

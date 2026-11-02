@@ -33,7 +33,7 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
     if (user.pw_changed && issuedAt < Number(user.pw_changed)) throw new AppError(401, "Your password was changed. Please log in again.");
 
     // The role comes from the database on every request - never from the browser.
-    req.user = { id: user.id, fullName: user.full_name, email: user.email, role: user.role, avatarVersion: user.avatar_version ? Number(user.avatar_version) : null };
+    req.user = { id: user.id, fullName: user.full_name, email: user.email, role: user.role, avatarVersion: user.avatar_version ? Number(user.avatar_version) : null, chatColor: user.chat_color ?? null };
     next();
   } catch (err) {
     next(err);

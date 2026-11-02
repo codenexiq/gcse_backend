@@ -23,6 +23,9 @@ export const passwordSchema = z.object({
 });
 export type PasswordInput = z.infer<typeof passwordSchema>;
 
+/** The chat colour: exactly #rrggbb (so nothing else can ever be stored or put into a page), or null for the standard colour. */
+export const chatColorSchema = z.object({ color: z.union([z.string().regex(/^#[0-9a-fA-F]{6}$/, "Choose a colour like #dff3e6"), z.null()]) });
+
 export const IMAGE_KINDS = ["avatar", "cover"] as const;
 export type ImageKind = (typeof IMAGE_KINDS)[number];
 

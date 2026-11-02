@@ -2,7 +2,7 @@
 declare global {
   namespace Express {
     interface Request {
-      user?: { id: number; fullName: string; email: string; role: "student" | "tutor" | "admin"; avatarVersion: number | null };
+      user?: { id: number; fullName: string; email: string; role: "student" | "tutor" | "admin"; avatarVersion: number | null; chatColor: string | null };
     }
   }
 }

@@ -16,6 +16,7 @@ interface AccountRow extends RowDataPacket {
   email: string;
   role: Role;
   created_at: Date;
+  avatar_v?: number | null;
 }
 
 /** Headline numbers for the tutor dashboard. */
@@ -171,7 +172,9 @@ export async function isStudentId(id: number) {
 
 export async function listTutor() {
   const [rows] = await pool.query<AccountRow[]>(
-    "SELECT id, full_name, email, role, created_at FROM users WHERE role IN ('tutor', 'admin') ORDER BY role, created_at DESC, id DESC LIMIT 500"
+    `SELECT id, full_name, email, role, created_at, (SELECT UNIX_TIMESTAMP(updated_at) FROM user_images WHERE user_id = users.id AND kind = 'avatar') AS avatar_v
+     FROM users WHERE role IN ('tutor', 'admin') ORDER BY role, created_at DESC, id DESC LIMIT 500`
   );
-  return rows;
+  // avatar_version changes whenever the picture changes; null when there is none.
+  return rows.map((r) => ({ id: r.id, full_name: r.full_name, email: r.email, role: r.role, created_at: r.created_at, avatar_version: r.avatar_v ? Number(r.avatar_v) : null }));
 }

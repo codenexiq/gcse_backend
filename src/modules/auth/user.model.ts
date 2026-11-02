@@ -13,6 +13,7 @@ export interface UserRow extends RowDataPacket {
   /** Only set by findById: when the password last changed (unix seconds) and the version of the profile picture. */
   pw_changed?: number | null;
   avatar_version?: number | null;
+  chat_color?: string | null;
 }
 
 export async function findByEmail(email: string) {
@@ -21,7 +22,7 @@ export async function findByEmail(email: string) {
 }
 
 export async function findById(id: number) {
-  const [rows] = await pool.query<UserRow[]>(`SELECT id, full_name, email, role, is_active, UNIX_TIMESTAMP(password_changed_at) AS pw_changed,
+  const [rows] = await pool.query<UserRow[]>(`SELECT id, full_name, email, role, is_active, chat_color, UNIX_TIMESTAMP(password_changed_at) AS pw_changed,
             (SELECT UNIX_TIMESTAMP(updated_at) FROM user_images WHERE user_id = users.id AND kind = 'avatar') AS avatar_version
      FROM users WHERE id = ?`, [id]);
   return rows[0];
