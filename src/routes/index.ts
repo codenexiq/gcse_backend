@@ -8,6 +8,7 @@ import profileRoutes from "../modules/profile/profile.routes.js";
 import chatRoutes from "../modules/chat/chat.routes.js";
 import studentRoutes from "../modules/student/student.routes.js";
 import tutorRoutes from "../modules/tutor/tutor.routes.js";
+import quizRoutes from "../modules/quiz/quiz.routes.js";
 
 const router = Router();
 
@@ -22,6 +23,7 @@ router.use("/items", itemRoutes);
 router.use("/profile", profileRoutes); // everyone manages their own profile (the account comes from the session)
 router.use("/chat", chatRoutes); // students and tutors talk to each other (the role decides what each can reach)
 router.use("/student", studentRoutes); // the student workflow (students only; checked inside)
+router.use("/quizzes", quizRoutes); // uploaded multiple-choice quizzes (tutors upload, students answer; the role decides what each can do)
 router.use("/tutor", tutorRoutes); // each route inside checks the role (tutor / admin)
 
 export default router;
