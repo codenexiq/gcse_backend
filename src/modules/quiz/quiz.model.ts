@@ -92,6 +92,34 @@ export async function create(userId: number, quiz: ParsedQuiz, published = true)
   return (await findSummary(id))!;
 }
 
+/** Replaces a quiz's title, questions and pictures with an edited version. Who took it, and what they scored, stays as it was. Whether it is published is not changed. */
+export async function update(id: number, quiz: ParsedQuiz) {
+  const marks = quiz.content.questions.reduce((sum, q) => sum + q.marks, 0);
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+    await conn.query(
+      "UPDATE quizzes SET title = ?, subtitle = ?, instructions = ?, question_count = ?, total_marks = ?, content = ? WHERE id = ?",
+      [quiz.title, quiz.subtitle || null, quiz.instructions || null, quiz.content.questions.length, marks, JSON.stringify(quiz.content), id]
+    );
+    await conn.query("DELETE FROM quiz_diagrams WHERE quiz_id = ?", [id]);
+    for (const [key, svg] of Object.entries(quiz.diagrams)) await conn.query("INSERT INTO quiz_diagrams (quiz_id, diagram_key, svg) VALUES (?, ?, ?)", [id, key, svg]);
+    await conn.commit();
+  } catch (err) {
+    await conn.rollback();
+    throw err;
+  } finally {
+    conn.release();
+  }
+  return (await findSummary(id))!;
+}
+
+/** Every picture of a quiz, by name (for the editor). */
+export async function diagramsOf(quizId: number) {
+  const [rows] = await pool.query<(RowDataPacket & { diagram_key: string; svg: string })[]>("SELECT diagram_key, svg FROM quiz_diagrams WHERE quiz_id = ?", [quizId]);
+  return Object.fromEntries(rows.map((r) => [r.diagram_key, r.svg]));
+}
+
 /** The SVG text of one picture of a quiz, or null. */
 export async function findDiagram(quizId: number, key: string) {
   const [rows] = await pool.query<(RowDataPacket & { svg: string })[]>("SELECT svg FROM quiz_diagrams WHERE quiz_id = ? AND diagram_key = ?", [quizId, key]);
@@ -141,7 +169,7 @@ export function forStudent(quiz: Found) {
     instructions: quiz.instructions,
     questionCount: quiz.questionCount,
     totalMarks: quiz.totalMarks,
-    questions: quiz.content.questions.map(({ id, ref, marks, topic, diagram, diagramKey, question, options }) => ({ id, ref, marks, topic, diagram, diagramKey: diagramKey ?? "", question, options })),
+    questions: quiz.content.questions.map(({ id, ref, marks, topic, diagram, diagramKey, diagramPosition, question, options }) => ({ id, ref, marks, topic, diagram, diagramKey: diagramKey ?? "", diagramPosition: diagramPosition ?? "below", question, options })),
   };
 }
 

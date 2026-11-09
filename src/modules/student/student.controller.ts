@@ -73,3 +73,11 @@ export async function readResult(req: Request, res: Response, next: NextFunction
     next(err);
   }
 }
+
+export async function readProgress(req: Request, res: Response, next: NextFunction) {
+  try {
+    res.json(await Student.progress(req.user!.id));
+  } catch (err) {
+    next(err);
+  }
+}

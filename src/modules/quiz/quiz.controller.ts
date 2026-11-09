@@ -44,6 +44,20 @@ export async function uploadQuiz(req: Request, res: Response, next: NextFunction
   }
 }
 
+/** Saves an edited quiz (the whole quiz is sent again, in the same format as an upload). */
+export async function updateQuiz(req: Request, res: Response, next: NextFunction) {
+  try {
+    const quiz = await openable(req);
+    if (!mayManage(req, quiz.createdBy)) throw new AppError(403, "Only an admin or the tutor who uploaded this quiz can edit it");
+    const parsed = parseQuizFile(req.body);
+    // The score messages are not part of the editor, so the quiz keeps the ones it has.
+    parsed.content.feedback = quiz.content.feedback;
+    res.json(await Quiz.update(quiz.id, parsed));
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function listQuizzes(req: Request, res: Response, next: NextFunction) {
   try {
     res.json(await Quiz.list(req.user!));
@@ -55,7 +69,10 @@ export async function listQuizzes(req: Request, res: Response, next: NextFunctio
 export async function getQuiz(req: Request, res: Response, next: NextFunction) {
   try {
     const quiz = await openable(req);
-    res.json(req.user!.role === "student" ? Quiz.forStudent(quiz) : Quiz.forTutor(quiz));
+    if (req.user!.role === "student") return void res.json(Quiz.forStudent(quiz));
+    // ?edit=1 (only for the person who may change the quiz) also sends the pictures, so the editor can show them.
+    const editing = req.query.edit === "1" && mayManage(req, quiz.createdBy);
+    res.json(editing ? { ...Quiz.forTutor(quiz), diagrams: await Quiz.diagramsOf(quiz.id) } : Quiz.forTutor(quiz));
   } catch (err) {
     next(err);
   }

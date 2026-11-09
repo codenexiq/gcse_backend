@@ -29,6 +29,7 @@ if (env.mcp.enabled) app.use("/mcp", express.json({ limit: "8mb" }), mcpRoutes);
 
 app.use(globalLimiter);
 app.use("/api/quizzes", express.json({ limit: "8mb" })); // a quiz file can hold a couple of hundred questions and its SVG diagrams
+app.use("/api/lessons/ai/pdf", express.json({ limit: "12mb" })); // a PDF worksheet is sent as base64
 app.use(express.json({ limit: "10kb" })); // small bodies only
 app.use(cookieParser());
 app.use(csrfProtection);

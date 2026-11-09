@@ -1,0 +1,631 @@
+{
+  "STRANDS": [
+    [
+      "Number",
+      [
+        "Place value and rounding",
+        "Negative numbers",
+        "Fractions",
+        "Percentages",
+        "Indices and surds",
+        "Standard form"
+      ]
+    ],
+    [
+      "Algebra",
+      [
+        "Solving linear equations",
+        "Expanding brackets",
+        "Factorising quadratics",
+        "Simultaneous equations",
+        "Rearranging formulae",
+        "Sequences"
+      ]
+    ],
+    [
+      "Ratio and proportion",
+      [
+        "Ratio",
+        "Direct and inverse proportion",
+        "Compound interest"
+      ]
+    ],
+    [
+      "Geometry and measures",
+      [
+        "Area and volume",
+        "Pythagoras",
+        "Trigonometry",
+        "Circle theorems"
+      ]
+    ],
+    [
+      "Probability",
+      [
+        "Basic probability",
+        "Tree diagrams",
+        "Venn diagrams"
+      ]
+    ],
+    [
+      "Statistics",
+      [
+        "Averages and range",
+        "Charts and graphs",
+        "Cumulative frequency"
+      ]
+    ]
+  ],
+  "QUESTIONS": [
+    {
+      "topic": "Fractions",
+      "q": "Work out $\\frac{3}{4} + \\frac{1}{6}$",
+      "opts": [
+        [
+          "$\\frac{11}{12}$",
+          1
+        ],
+        [
+          "$\\frac{4}{10}$",
+          0,
+          "Adding fractions: adding the tops and the bottoms"
+        ],
+        [
+          "$\\frac{4}{24}$",
+          0
+        ],
+        [
+          "$\\frac{1}{2}$",
+          0
+        ]
+      ]
+    },
+    {
+      "topic": "Percentages",
+      "q": "Increase $80$ by $15\\%$",
+      "opts": [
+        [
+          "$95$",
+          0,
+          "Percentages: adding the percentage as a number"
+        ],
+        [
+          "$92$",
+          1
+        ],
+        [
+          "$12$",
+          0
+        ],
+        [
+          "$68$",
+          0
+        ]
+      ]
+    },
+    {
+      "topic": "Negative numbers",
+      "q": "Work out $2x^2$ when $x = -3$",
+      "opts": [
+        [
+          "$-18$",
+          0,
+          "Squaring negative numbers"
+        ],
+        [
+          "$36$",
+          0
+        ],
+        [
+          "$18$",
+          1
+        ],
+        [
+          "$-36$",
+          0
+        ]
+      ]
+    },
+    {
+      "topic": "Expanding brackets",
+      "q": "Which is equal to $(x + 3)^2$?",
+      "opts": [
+        [
+          "$x^2 + 9$",
+          0,
+          "Squaring brackets: (a + b)² = a² + b²"
+        ],
+        [
+          "$x^2 + 6x + 9$",
+          1
+        ],
+        [
+          "$x^2 + 3x + 9$",
+          0
+        ],
+        [
+          "$2x + 6$",
+          0
+        ]
+      ]
+    },
+    {
+      "topic": "Factorising quadratics",
+      "q": "Factorise $x^2 + 5x + 6$",
+      "opts": [
+        [
+          "$(x + 5)(x + 1)$",
+          0,
+          "Factorising: matching the sum but not the product"
+        ],
+        [
+          "$(x + 6)(x - 1)$",
+          0
+        ],
+        [
+          "$(x + 2)(x + 3)$",
+          1
+        ],
+        [
+          "$x(x + 11)$",
+          0
+        ]
+      ]
+    },
+    {
+      "topic": "Simultaneous equations",
+      "q": "Solve the simultaneous equations $x + y = 10$ and $x - y = 4$",
+      "opts": [
+        [
+          "$x = 7,\\ y = 3$",
+          1
+        ],
+        [
+          "$x = 3,\\ y = 7$",
+          0,
+          "Simultaneous equations: mixing up which letter is which"
+        ],
+        [
+          "$x = 14,\\ y = -4$",
+          0,
+          "Simultaneous equations: adding when you should subtract"
+        ],
+        [
+          "$x = 5,\\ y = 5$",
+          0
+        ]
+      ]
+    },
+    {
+      "topic": "Rearranging formulae",
+      "q": "Make $x$ the subject of $y = 3x + 2$",
+      "opts": [
+        [
+          "$x = \\frac{y}{3} - 2$",
+          0,
+          "Rearranging: undoing steps in the wrong order"
+        ],
+        [
+          "$x = \\frac{y - 2}{3}$",
+          1
+        ],
+        [
+          "$x = 3y - 2$",
+          0
+        ],
+        [
+          "$x = \\frac{y + 2}{3}$",
+          0
+        ]
+      ]
+    },
+    {
+      "topic": "Pythagoras",
+      "q": "A right-angled triangle has shorter sides $6$ cm and $8$ cm. How long is the longest side?",
+      "opts": [
+        [
+          "$14$ cm",
+          0,
+          "Pythagoras: adding the sides instead of the squares"
+        ],
+        [
+          "$10$ cm",
+          1
+        ],
+        [
+          "$48$ cm",
+          0
+        ],
+        [
+          "$100$ cm",
+          0
+        ]
+      ]
+    },
+    {
+      "topic": "Trigonometry",
+      "q": "Which ratio uses the opposite side and the hypotenuse?",
+      "opts": [
+        [
+          "$\\tan\\theta$",
+          0,
+          "Trigonometry: choosing the wrong ratio"
+        ],
+        [
+          "$\\cos\\theta$",
+          0,
+          "Trigonometry: choosing the wrong ratio"
+        ],
+        [
+          "$\\sin\\theta$",
+          1
+        ],
+        [
+          "None of these",
+          0
+        ]
+      ]
+    },
+    {
+      "topic": "Basic probability",
+      "q": "The probability it rains tomorrow is $0.3$. What is the probability it does not rain?",
+      "opts": [
+        [
+          "$0.3$",
+          0
+        ],
+        [
+          "$0.7$",
+          1
+        ],
+        [
+          "$1.3$",
+          0
+        ],
+        [
+          "$-0.3$",
+          0
+        ]
+      ]
+    }
+  ],
+  "GROUPS": [
+    {
+      "id": "g1",
+      "name": "Thursday Algebra group",
+      "day": "THU",
+      "date": "22",
+      "month": "OCT",
+      "time": "6:00 – 7:00 pm",
+      "focus": [
+        "Expanding brackets",
+        "Simultaneous equations",
+        "Factorising quadratics",
+        "Rearranging formulae"
+      ],
+      "zoom": "zoom.us/j/[MEETING-ID-1]"
+    },
+    {
+      "id": "g2",
+      "name": "Saturday Geometry group",
+      "day": "SAT",
+      "date": "24",
+      "month": "OCT",
+      "time": "11:00 am – 12:00 pm",
+      "focus": [
+        "Trigonometry",
+        "Pythagoras"
+      ],
+      "zoom": "zoom.us/j/[MEETING-ID-2]"
+    },
+    {
+      "id": "g3",
+      "name": "Sunday Number group",
+      "day": "SUN",
+      "date": "25",
+      "month": "OCT",
+      "time": "5:00 – 6:00 pm",
+      "focus": [
+        "Fractions",
+        "Negative numbers",
+        "Percentages"
+      ],
+      "zoom": "zoom.us/j/[MEETING-ID-3]"
+    }
+  ],
+  "SAMPLE": [
+    {
+      "name": "Ayaan Siddiqui",
+      "score": 58,
+      "group": "g1",
+      "mastery": 48,
+      "mins": 125,
+      "topics": 12,
+      "last": "Today"
+    },
+    {
+      "name": "Mariam Chaudhry",
+      "score": 90,
+      "group": "g1",
+      "mastery": 61,
+      "mins": 260,
+      "topics": 15,
+      "last": "Today"
+    },
+    {
+      "name": "Zainab Qureshi",
+      "score": 64,
+      "group": "g1",
+      "mastery": 47,
+      "mins": 135,
+      "topics": 11,
+      "last": "Yesterday"
+    },
+    {
+      "name": "Hamza Rehman",
+      "score": 75,
+      "group": "g2",
+      "mastery": 55,
+      "mins": 150,
+      "topics": 14,
+      "last": "Yesterday"
+    },
+    {
+      "name": "Daniyal Khan",
+      "score": 82,
+      "group": "g2",
+      "mastery": 70,
+      "mins": 225,
+      "topics": 18,
+      "last": "Today"
+    },
+    {
+      "name": "Sana Ahmed",
+      "score": 40,
+      "group": "g3",
+      "mastery": 29,
+      "mins": 20,
+      "topics": 7,
+      "last": "4 days ago"
+    }
+  ],
+  "LESSONS": {
+    "Sequences": [
+      {
+        "id": "l-seq",
+        "title": "The nth term",
+        "published": true,
+        "blocks": [
+          {
+            "id": "b-s1",
+            "type": "slide",
+            "title": "Sequence basics",
+            "body": "A sequence is an ordered list of numbers, so position matters. Each number is a term, and the position tells you whether it is first, second, third, and so on.\n\nA term-to-term rule tells you how to move from one term to the next, such as \"add 4\". An nth-term rule, such as $4n + 1$, gives the term at position $n$ directly.\n\nWhen you meet a new sequence, check the gaps between consecutive terms. Do not just use the first gap, because some sequences have changing gaps."
+          },
+          {
+            "id": "b-s2",
+            "type": "mcq",
+            "question": "In an nth-term rule such as $5n + 2$, what does $n$ represent?",
+            "options": [
+              "The common difference",
+              "The total number of terms",
+              "The position number",
+              "The first term"
+            ],
+            "correct": 2,
+            "explain": "$n$ is the position: $n = 1$ gives the first term, $n = 2$ the second, and so on."
+          },
+          {
+            "id": "b-s3",
+            "type": "slide",
+            "title": "Using an nth-term formula",
+            "body": "The letter $n$ means the position number, and in GCSE questions the first term is usually when $n = 1$. To find a term, substitute the position into the formula.\n\nFor the nth term $5n + 2$, substitute $n = 1$ and $n = 2$. This gives the first two terms:\n\n$$5(1) + 2 = 7$$\n\n$$5(2) + 2 = 12$$\n\nTo check whether 37 is in the sequence, set the formula equal to 37 and solve the equation:\n\n$$5n + 2 = 37$$\n\n$$5n = 35$$\n\n$$n = 7$$\n\nBecause $n = 7$ is a positive whole number, 37 is a term in the sequence. If you get a decimal, fraction, or negative value for $n$, the number is not a term."
+          },
+          {
+            "id": "b-s4",
+            "type": "mcq",
+            "question": "What is the 4th term of the sequence $5n + 2$?",
+            "options": [
+              "20",
+              "22",
+              "27",
+              "9"
+            ],
+            "correct": 1,
+            "explain": "Substitute $n = 4$: $5(4) + 2 = 22$."
+          },
+          {
+            "id": "b-s5",
+            "type": "written",
+            "question": "Is 52 a term in the sequence $5n + 2$? Show how you know.",
+            "markScheme": "1 mark: sets up 5n + 2 = 52. 1 mark: solves to n = 10. 1 mark: concludes that 52 is a term (the 10th) because n is a positive whole number.",
+            "marks": 3
+          }
+        ]
+      }
+    ],
+    "Expanding brackets": [
+      {
+        "id": "l-expn",
+        "kind": "notes",
+        "title": "Notes: Expanding brackets",
+        "published": true,
+        "blocks": [
+          {
+            "id": "b-n1",
+            "type": "slide",
+            "title": "Single brackets",
+            "body": "Multiply the term outside by every term inside.\n\n$3(x + 4) = 3x + 12$"
+          },
+          {
+            "id": "b-n2",
+            "type": "slide",
+            "title": "Double brackets",
+            "body": "Use a grid or FOIL so every term meets every other term.\n\n$(x + 2)(x + 5) = x^2 + 7x + 10$"
+          }
+        ]
+      },
+      {
+        "id": "l-exp",
+        "title": "Squaring a bracket",
+        "published": true,
+        "blocks": [
+          {
+            "id": "b-e1",
+            "type": "video",
+            "title": "Squaring brackets with the area model",
+            "url": "",
+            "note": "Watch this 6-minute video first. Pause it and try each example before the answer appears."
+          },
+          {
+            "id": "b-e2",
+            "type": "slide",
+            "title": "Squaring a bracket",
+            "body": "$(x + 3)^2$ means $(x + 3)(x + 3)$. Every term in the first bracket multiplies every term in the second.\n\nDraw a 2 by 2 grid. The four parts are $x^2$, $3x$, $3x$ and $9$. Add them up:\n\n$$(x + 3)^2 = x^2 + 6x + 9$$\n\nThe middle term is always double the product of the two terms in the bracket."
+          },
+          {
+            "id": "b-e3",
+            "type": "mcq",
+            "question": "Which is equal to $(x + 5)^2$?",
+            "options": [
+              "$x^2 + 25$",
+              "$x^2 + 10x + 25$",
+              "$x^2 + 5x + 25$",
+              "$2x + 10$"
+            ],
+            "correct": 1,
+            "explain": "$(x + 5)(x + 5) = x^2 + 5x + 5x + 25 = x^2 + 10x + 25$."
+          },
+          {
+            "id": "b-e4",
+            "type": "slide",
+            "title": "The most common mistake",
+            "body": "Many students write $(a + b)^2 = a^2 + b^2$. This misses the two middle parts of the grid.\n\nCheck with numbers: $(1 + 2)^2 = 9$, but $1^2 + 2^2 = 5$. The difference is the missing $2ab$."
+          },
+          {
+            "id": "b-e5",
+            "type": "written",
+            "question": "Explain why $(a + b)^2$ is not equal to $a^2 + b^2$.",
+            "markScheme": "1 mark: writes (a + b)^2 as (a + b)(a + b) or uses an area model or a numerical counterexample. 1 mark: identifies the missing 2ab term.",
+            "marks": 2
+          }
+        ]
+      }
+    ],
+    "Simultaneous equations": [
+      {
+        "id": "l-simq",
+        "kind": "quiz",
+        "source": "Simultaneous equations worksheet.pdf",
+        "title": "Quiz: Simultaneous equations",
+        "published": true,
+        "blocks": [
+          {
+            "id": "b-q1",
+            "type": "mcq",
+            "question": "Solve $x + y = 10$ and $x - y = 4$",
+            "options": [
+              "$x = 7,\\ y = 3$",
+              "$x = 3,\\ y = 7$",
+              "$x = 14,\\ y = -4$",
+              "$x = 5,\\ y = 5$"
+            ],
+            "correct": 0,
+            "explain": "Add the equations: $2x = 14$, so $x = 7$ and $y = 3$."
+          },
+          {
+            "id": "b-q2",
+            "type": "mcq",
+            "question": "Solve $2x + y = 11$ and $x + y = 7$",
+            "options": [
+              "$x = 2,\\ y = 5$",
+              "$x = 4,\\ y = 3$",
+              "$x = 3,\\ y = 4$",
+              "$x = 9,\\ y = -7$"
+            ],
+            "correct": 1,
+            "explain": "Subtract the second from the first: $x = 4$, then $y = 3$."
+          },
+          {
+            "id": "b-q3",
+            "type": "written",
+            "question": "Solve $3x + 2y = 16$ and $5x - 2y = 8$. Show your working.",
+            "markScheme": "1 mark: adds to get 8x = 24. 1 mark: x = 3. 1 mark: y = 3.5.",
+            "marks": 3
+          }
+        ]
+      }
+    ]
+  },
+  "ROUTES": [
+    {
+      "id": "rt-alg",
+      "name": "GCSE Higher: Algebra foundations",
+      "desc": "Six-week route for students starting on algebra after the diagnostic.",
+      "assignedAt": 1794197040428,
+      "items": [
+        {
+          "id": "itid",
+          "lesson": "l-expn",
+          "week": 1
+        },
+        {
+          "id": "itid",
+          "lesson": "l-exp",
+          "week": 1
+        },
+        {
+          "id": "itid",
+          "lesson": "l-seq",
+          "week": 2
+        },
+        {
+          "id": "itid",
+          "lesson": "l-simq",
+          "week": 3
+        }
+      ],
+      "assigned": [
+        "s:Ayaan Siddiqui",
+        "s:Zainab Qureshi"
+      ]
+    }
+  ],
+  "MESSAGES": [
+    {
+      "name": "Ayaan Siddiqui",
+      "msgs": [
+        {
+          "from": "student",
+          "text": "Miss, is Thursday's session still at 6?",
+          "at": 1794110640428
+        },
+        {
+          "from": "teacher",
+          "text": "Yes, 6pm as usual. See you there!",
+          "at": 1794115040428
+        }
+      ]
+    },
+    {
+      "name": "Sana Ahmed",
+      "msgs": [
+        {
+          "from": "student",
+          "text": "I don't get why $(x + 3)^2$ isn't $x^2 + 9$",
+          "at": 1794189840428
+        }
+      ]
+    },
+    {
+      "name": "Mariam Chaudhry",
+      "msgs": [
+        {
+          "from": "teacher",
+          "text": "Brilliant 9/10 on sequences, Mariam. Try the Higher practice set next.",
+          "at": 1794024240428
+        }
+      ]
+    }
+  ]
+}

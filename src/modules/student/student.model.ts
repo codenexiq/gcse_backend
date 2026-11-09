@@ -173,7 +173,28 @@ export async function gradeAndSave(userId: number, profile: Profile, limit: numb
     total,
     JSON.stringify(details),
   ]);
+  await saveTopicStatuses(userId, details);
   return { correct, notLearned, incorrect: answered - correct - notLearned, total, ...details } satisfies DiagnosticResult;
+}
+
+/**
+ * Remembers what the diagnostic found for each topic it covered: right = mastered, wrong = needs work, "not learned yet" = not started.
+ * Taking the diagnostic again replaces the status of the topics it covers; other topics are left alone.
+ */
+async function saveTopicStatuses(userId: number, d: Details) {
+  const rows: [number, string, string][] = [
+    ...d.strong.map((t): [number, string, string] => [userId, t, "mastered"]),
+    ...d.needWork.map((t): [number, string, string] => [userId, t, "needs_work"]),
+    ...d.notLearnedTopics.map((t): [number, string, string] => [userId, t, "not_started"]),
+  ];
+  if (rows.length === 0) return;
+  await pool.query("INSERT INTO student_topic_status (student_id, topic, status) VALUES ? ON DUPLICATE KEY UPDATE status = VALUES(status)", [rows]);
+}
+
+/** The student's topic statuses, as { topic, status }. */
+export async function topicStatuses(userId: number) {
+  const [rows] = await pool.query<RowDataPacket[]>("SELECT topic, status FROM student_topic_status WHERE student_id = ? ORDER BY topic", [userId]);
+  return rows as { topic: string; status: "mastered" | "in_progress" | "needs_work" | "not_started" }[];
 }
 
 /** The student's most recent finished diagnostic, or null if they have not done one. */
@@ -183,4 +204,22 @@ export async function latestResult(userId: number): Promise<DiagnosticResult | n
   if (!row) return null;
   const details: Details = row.details ? (JSON.parse(row.details) as Details) : { strong: [], needWork: [], notLearnedTopics: [], misconceptions: [] };
   return { correct: row.correct, notLearned: row.not_learned, incorrect: row.total - row.correct - row.not_learned, total: row.total, ...details };
+}
+
+/**
+ * Where the student is in the first steps, worked out from what they have saved (never stored separately, so it can not drift):
+ *  about-you  - the About you screen is not finished
+ *  diagnostic - About you is done, the diagnostic has not been handed in
+ *  results    - the diagnostic is done and a tutor has not placed the student in a group yet
+ *  group      - a tutor has placed the student in a group
+ */
+export async function progress(userId: number) {
+  const profile = await getProfile(userId);
+  const [rows] = await pool.query<RowDataPacket[]>("SELECT COUNT(*) AS n FROM diagnostic_attempts WHERE user_id = ?", [userId]);
+  const [placed] = await pool.query<RowDataPacket[]>("SELECT COUNT(*) AS n FROM student_groups WHERE student_id = ?", [userId]);
+  const aboutYou = Boolean(profile && profile.subjectId);
+  const diagnostic = aboutYou && Number(rows[0]?.n ?? 0) > 0;
+  const group = diagnostic && Number(placed[0]?.n ?? 0) > 0;
+  const step = !aboutYou ? "about-you" : !diagnostic ? "diagnostic" : !group ? "results" : "group";
+  return { step, aboutYou, diagnostic, group };
 }

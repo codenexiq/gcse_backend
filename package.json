@@ -12,10 +12,13 @@
     "db:setup": "tsx database/scripts/setup.ts",
     "db:migrate": "tsx database/scripts/migrate.ts",
     "db:seed": "tsx database/scripts/seed.ts",
+    "db:seed-demo": "tsx database/scripts/seed-demo.ts",
+    "db:unseed-demo": "tsx database/scripts/seed-demo.ts remove",
     "db:reset": "tsx database/scripts/reset.ts",
     "tutor:create": "tsx database/scripts/create-tutor.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.6.0",
     "@modelcontextprotocol/sdk": "^1.32.2",
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",

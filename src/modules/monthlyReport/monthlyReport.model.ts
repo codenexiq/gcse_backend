@@ -46,10 +46,21 @@ interface TutorRow extends Row {
   avatar_v?: number | null;
 }
 
+const FIGURE_KEYS = ["attended", "held", "testCount", "tests", "workingAt", "targetGrade", "progress"] as const;
+
+function figures(json: string) {
+  try {
+    const data = JSON.parse(json) as Record<string, unknown>;
+    return Object.fromEntries(FIGURE_KEYS.map((k) => [k, data[k]]));
+  } catch {
+    return {};
+  }
+}
+
 /** Every report that has been sent, newest first, with the student it is for (the tutor's table). */
 export async function listAll() {
   const [rows] = await pool.query<TutorRow[]>(
-    `SELECT r.id, r.student_id, u.full_name, u.email, r.subject, r.month, r.updated_at, (SELECT UNIX_TIMESTAMP(updated_at) FROM user_images WHERE user_id = u.id AND kind = 'avatar') AS avatar_v
+    `SELECT r.id, r.student_id, u.full_name, u.email, r.subject, r.month, r.data, r.updated_at, (SELECT UNIX_TIMESTAMP(updated_at) FROM user_images WHERE user_id = u.id AND kind = 'avatar') AS avatar_v
      FROM monthly_reports r JOIN users u ON u.id = r.student_id
      ORDER BY r.updated_at DESC, r.id DESC LIMIT 500`
   );
@@ -61,6 +72,8 @@ export async function listAll() {
     subject: r.subject,
     month: r.month,
     updated_at: r.updated_at,
+    /** Just the figures the table shows (attendance, tests, working at / target, progress), not the whole report. */
+    figures: figures(r.data),
     /** Changes whenever the student's profile picture changes; null when they have none. */
     avatar_version: r.avatar_v ? Number(r.avatar_v) : null,
   }));

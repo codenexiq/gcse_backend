@@ -4,6 +4,10 @@ import { rawImage } from "../../middleware/rawImage/index.js";
 import { validate } from "../../middleware/validate/index.js";
 import diagnosticRoutes from "../diagnostic/diagnostic.routes.js";
 import startupContentRoutes from "../startup/content.routes.js";
+import bookingRoutes from "../booking/booking.routes.js";
+import learningRouteRoutes from "../route/route.routes.js";
+import groupRoutes from "../group/group.routes.js";
+import studentReviewRoutes from "../studentReview/studentReview.routes.js";
 import lessonLogRoutes from "../lessonLog/lessonLog.routes.js";
 import { tutorReportRoutes } from "../monthlyReport/monthlyReport.routes.js";
 import startupRoutes from "../startup/startup.routes.js";
@@ -15,6 +19,11 @@ const router = Router();
 // Tutors and admins can see the overview and the student directory...
 router.get("/overview", requireRole("tutor", "admin"), getOverview);
 router.get("/students", requireRole("tutor", "admin"), getStudents);
+router.use("/groups", groupRoutes);
+router.use("/routes", learningRouteRoutes);
+router.use("/bookings", bookingRoutes);
+// Who is waiting for a group, and what a student's diagnostic found.
+router.use("/students", studentReviewRoutes);
 // Admins and tutors manage student profiles: create, change, set pictures, switch Active / Inactive.
 router.get("/students/username-available", requireRole("tutor", "admin"), checkUsername);
 router.post("/students", requireRole("tutor", "admin"), validate(createStudentSchema), createStudent);

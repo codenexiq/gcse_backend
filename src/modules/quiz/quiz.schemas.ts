@@ -15,6 +15,7 @@ const questionSchema = z
     marks: z.number({ error: "marks must be a number" }).int("marks must be a whole number").min(1, "marks must be at least 1").max(20, "marks can be 20 at most").default(1),
     topic: z.string().trim().max(150, "topic is at most 150 characters").default(""),
     diagramKey: z.string().regex(DIAGRAM_KEY, "the diagram name can use letters, numbers, - and _ (40 at most)").default(""),
+    diagramPosition: z.enum(["above", "below", "left", "right"], { error: "diagramPosition must be above, below, left or right" }).default("below"),
     diagram: z.string().trim().max(1500, "diagram is at most 1500 characters").default(""),
     question: z.string({ error: "the question text is missing" }).trim().min(1, "the question text is empty").max(1000, "the question is at most 1000 characters"),
     options: z.record(letter, z.string().trim().min(1, "an option is empty").max(500, "an option is at most 500 characters"), { error: "options must list the choices, like { \"A\": \"...\", \"B\": \"...\" }" }),
@@ -81,6 +82,8 @@ export interface QuizQuestion {
   diagram: string;
   /** The name of the SVG picture for this question ("" if none). */
   diagramKey: string;
+  /** Where the picture sits next to the question text. */
+  diagramPosition: "above" | "below" | "left" | "right";
   question: string;
   options: Record<string, string>;
   correct: string;

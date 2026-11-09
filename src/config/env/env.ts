@@ -31,6 +31,8 @@ export const env = {
   trustProxy: Number(process.env.TRUST_PROXY) || 0,
   jwtSecret,
   mcp: { secret: mcpSecret, userEmail: mcpUserEmail, enabled: mcpSecret.length >= 32 && mcpUserEmail !== "" },
+  // The AI helper (marking written answers, Genie, practice sets, lesson drafts). Off until ANTHROPIC_API_KEY is set.
+  ai: { apiKey: process.env.ANTHROPIC_API_KEY || "", model: process.env.AI_MODEL || "claude-sonnet-5-5", perHour: Number(process.env.AI_CALLS_PER_HOUR) || 60 },
   sessionHours: Number(process.env.SESSION_HOURS) || 2,
   db: {
     host: process.env.DB_HOST || "localhost",
