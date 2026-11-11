@@ -3,6 +3,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { Connection } from "mysql2/promise";
 import { connect, dbName } from "./connection.js";
+import { seedSite } from "./seed-site.js";
+import { seedCatalog } from "./seed-catalog.js";
 
 const seedsDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "seeds");
 
@@ -13,6 +15,8 @@ export async function seed(db: Connection) {
     console.log(`  seeding ${file}`);
     await db.query(fs.readFileSync(path.join(seedsDir, file), "utf8"));
   }
+  await seedCatalog(db);
+  await seedSite(db);
   console.log("Seed data loaded.");
 }
 

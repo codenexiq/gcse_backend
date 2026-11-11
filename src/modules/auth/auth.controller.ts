@@ -49,7 +49,7 @@ export async function login(req: Request, res: Response, next: NextFunction) {
   try {
     const { email, password } = req.body as Credentials;
     const user = await User.findByEmail(email);
-    const ok = await bcrypt.compare(password, user ? user.password_hash : DUMMY_HASH);
+    const ok = await bcrypt.compare(password, user?.password_hash ? user.password_hash : DUMMY_HASH);
     // Same message for "no such email" and "wrong password" - do not help attackers.
     if (!user || !ok) throw new AppError(401, "Invalid email or password");
     if (!user.is_active) throw new AppError(403, "This account is inactive. Please contact your tutor.");
@@ -68,7 +68,7 @@ export async function tutorLogin(req: Request, res: Response, next: NextFunction
   try {
     const { email, password } = req.body as Credentials;
     const user = await User.findByEmail(email);
-    const ok = await bcrypt.compare(password, user ? user.password_hash : DUMMY_HASH);
+    const ok = await bcrypt.compare(password, user?.password_hash ? user.password_hash : DUMMY_HASH);
     // A student using the tutor form gets the exact same answer (and takes the same time) as a wrong
     // password, so nobody can find out which emails belong to tutor.
     if (!user || !ok || !TUTOR_ROLES.includes(user.role)) throw new AppError(401, "Invalid email or password");

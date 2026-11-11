@@ -12,6 +12,8 @@
     "db:setup": "tsx database/scripts/setup.ts",
     "db:migrate": "tsx database/scripts/migrate.ts",
     "db:seed": "tsx database/scripts/seed.ts",
+    "db:seed-site": "tsx database/scripts/seed-site.ts",
+    "db:seed-catalog": "tsx database/scripts/seed-catalog.ts",
     "db:seed-demo": "tsx database/scripts/seed-demo.ts",
     "db:unseed-demo": "tsx database/scripts/seed-demo.ts remove",
     "db:reset": "tsx database/scripts/reset.ts",

@@ -43,3 +43,11 @@ export const profileLimiter = rateLimit({
   limit: 60,
   message: { message: "Too many requests, please wait a moment" },
 });
+
+// The public contact form: 5 messages an hour per IP, so it cannot be used to flood the admins' inbox.
+export const enquiryLimiter = rateLimit({
+  ...base,
+  windowMs: 60 * 60 * 1000,
+  limit: 5,
+  message: { message: "You have sent several messages already. Please try again later, or email us." },
+});

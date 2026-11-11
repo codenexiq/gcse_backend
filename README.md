@@ -12,6 +12,8 @@
    All database files live in [database/](database/README.md).
 4. `npm run dev` -> http://localhost:5000/api/health
 
+The public website (blog posts, shop packs, tutors, reviews) reads its content from the database. `npm run db:seed-site` fills the empty tables with the starting content (it never overwrites existing rows). Contact-form messages are saved in `site_enquiries`; admins read them in the dashboard (Settings > Website enquiries).
+
 After pulling or writing new code, run `npm run db:migrate` again. If you forget, the server prints a clear **WARNING** at start-up
 listing the migrations that have not been run (otherwise you would only see 'Unknown column' errors).
 

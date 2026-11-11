@@ -1,0 +1,2120 @@
+{
+  "role": "student",
+  "tutorId": "t1",
+  "tTab": "today",
+  "aTab": "overview",
+  "meId": null,
+  "cfg": {
+    "welcome": "Find your gaps. Follow your plan. Learn with a real teacher.",
+    "levels": [
+      {
+        "id": "ks3",
+        "name": "Key Stage 3",
+        "short": "KS3",
+        "years": [
+          "Year 7",
+          "Year 8",
+          "Year 9"
+        ],
+        "tiers": [],
+        "boards": [],
+        "grades": [
+          "Emerging",
+          "Developing",
+          "Secure",
+          "Mastered"
+        ]
+      },
+      {
+        "id": "gcse",
+        "name": "GCSE",
+        "short": "GCSE",
+        "years": [
+          "Year 10",
+          "Year 11"
+        ],
+        "tiers": [
+          "Foundation",
+          "Higher"
+        ],
+        "boards": [
+          "AQA",
+          "Edexcel",
+          "OCR"
+        ],
+        "grades": [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7",
+          "8",
+          "9"
+        ]
+      },
+      {
+        "id": "alevel",
+        "name": "A-level",
+        "short": "A-level",
+        "years": [
+          "Year 12",
+          "Year 13"
+        ],
+        "tiers": [],
+        "boards": [
+          "AQA",
+          "Edexcel",
+          "OCR"
+        ],
+        "grades": [
+          "E",
+          "D",
+          "C",
+          "B",
+          "A",
+          "A*"
+        ]
+      }
+    ],
+    "subjects": [
+      {
+        "id": "maths",
+        "name": "Maths",
+        "icon": "maths",
+        "color": "#2B6CB0",
+        "levels": [
+          "ks3",
+          "gcse",
+          "alevel"
+        ]
+      },
+      {
+        "id": "physics",
+        "name": "Physics",
+        "icon": "physics",
+        "color": "#6B4FC9",
+        "levels": [
+          "gcse",
+          "alevel"
+        ]
+      },
+      {
+        "id": "chemistry",
+        "name": "Chemistry",
+        "icon": "chemistry",
+        "color": "#2E8B66",
+        "levels": [
+          "gcse",
+          "alevel"
+        ]
+      },
+      {
+        "id": "biology",
+        "name": "Biology",
+        "icon": "biology",
+        "color": "#B4475A",
+        "levels": [
+          "gcse",
+          "alevel"
+        ]
+      },
+      {
+        "id": "english",
+        "name": "English",
+        "icon": "english",
+        "color": "#B5741C",
+        "levels": [
+          "ks3",
+          "gcse"
+        ]
+      }
+    ],
+    "topics": {
+      "maths|gcse": [
+        {
+          "strand": "Number",
+          "topics": [
+            {
+              "id": "t5glyecz",
+              "name": "Fractions"
+            },
+            {
+              "id": "tv3acjwk",
+              "name": "Percentages"
+            },
+            {
+              "id": "tbew4cgw",
+              "name": "Negative numbers"
+            },
+            {
+              "id": "tgyp8vc5",
+              "name": "Indices and surds"
+            },
+            {
+              "id": "tsw7ths2",
+              "name": "Standard form"
+            }
+          ]
+        },
+        {
+          "strand": "Algebra",
+          "topics": [
+            {
+              "id": "te0nlu4z",
+              "name": "Expanding brackets"
+            },
+            {
+              "id": "tlabgle5",
+              "name": "Factorising quadratics"
+            },
+            {
+              "id": "to9guubt",
+              "name": "Simultaneous equations"
+            },
+            {
+              "id": "tnauehim",
+              "name": "Rearranging formulae"
+            },
+            {
+              "id": "tpbn046s",
+              "name": "Sequences"
+            }
+          ]
+        },
+        {
+          "strand": "Ratio and proportion",
+          "topics": [
+            {
+              "id": "tn92ai1f",
+              "name": "Ratio"
+            },
+            {
+              "id": "to7t7p6r",
+              "name": "Direct and inverse proportion"
+            },
+            {
+              "id": "tb9es9q8",
+              "name": "Compound interest"
+            }
+          ]
+        },
+        {
+          "strand": "Geometry and measures",
+          "topics": [
+            {
+              "id": "t6fcexdh",
+              "name": "Area and volume"
+            },
+            {
+              "id": "thf5l4vk",
+              "name": "Pythagoras"
+            },
+            {
+              "id": "t29zs3vq",
+              "name": "Trigonometry"
+            },
+            {
+              "id": "toamsfj8",
+              "name": "Circle theorems"
+            }
+          ]
+        },
+        {
+          "strand": "Probability",
+          "topics": [
+            {
+              "id": "tjax0tlp",
+              "name": "Basic probability"
+            },
+            {
+              "id": "tibebsi7",
+              "name": "Tree diagrams"
+            },
+            {
+              "id": "ts19vn7j",
+              "name": "Venn diagrams"
+            }
+          ]
+        },
+        {
+          "strand": "Statistics",
+          "topics": [
+            {
+              "id": "typ8ary1",
+              "name": "Averages and range"
+            },
+            {
+              "id": "tzt5by2e",
+              "name": "Histograms"
+            },
+            {
+              "id": "tqrow744",
+              "name": "Box plots"
+            },
+            {
+              "id": "typ6xx88",
+              "name": "Cumulative frequency"
+            }
+          ]
+        }
+      ],
+      "physics|gcse": [
+        {
+          "strand": "Energy",
+          "topics": [
+            {
+              "id": "tpdqxg5x",
+              "name": "Energy stores"
+            },
+            {
+              "id": "tfppsrby",
+              "name": "Work and power"
+            },
+            {
+              "id": "tdb0rawj",
+              "name": "Efficiency"
+            }
+          ]
+        },
+        {
+          "strand": "Electricity",
+          "topics": [
+            {
+              "id": "t8yo6o4a",
+              "name": "Circuits"
+            },
+            {
+              "id": "tq7r0of0",
+              "name": "Resistance"
+            },
+            {
+              "id": "to6kgrqv",
+              "name": "Mains electricity"
+            }
+          ]
+        },
+        {
+          "strand": "Particle model",
+          "topics": [
+            {
+              "id": "twxk6kba",
+              "name": "Density"
+            },
+            {
+              "id": "tanir0ei",
+              "name": "Changes of state"
+            }
+          ]
+        },
+        {
+          "strand": "Atomic structure",
+          "topics": [
+            {
+              "id": "tp8olnuz",
+              "name": "Atoms and isotopes"
+            },
+            {
+              "id": "tv9dtu3x",
+              "name": "Radioactive decay"
+            }
+          ]
+        },
+        {
+          "strand": "Forces",
+          "topics": [
+            {
+              "id": "tbqgorx7",
+              "name": "Forces and motion"
+            },
+            {
+              "id": "tai89tpd",
+              "name": "Newton's laws"
+            },
+            {
+              "id": "tpimz4ua",
+              "name": "Momentum"
+            }
+          ]
+        },
+        {
+          "strand": "Waves",
+          "topics": [
+            {
+              "id": "t6qa33z2",
+              "name": "Wave properties"
+            },
+            {
+              "id": "t2l82kpm",
+              "name": "Electromagnetic spectrum"
+            }
+          ]
+        },
+        {
+          "strand": "Magnetism",
+          "topics": [
+            {
+              "id": "trhexus4",
+              "name": "Magnets and fields"
+            },
+            {
+              "id": "tdj17ul3",
+              "name": "Motor effect"
+            }
+          ]
+        }
+      ],
+      "chemistry|gcse": [
+        {
+          "strand": "Atomic structure",
+          "topics": [
+            {
+              "id": "tnjubpva",
+              "name": "Atoms and the periodic table"
+            }
+          ]
+        },
+        {
+          "strand": "Bonding",
+          "topics": [
+            {
+              "id": "tvcvqxso",
+              "name": "Ionic and covalent bonding"
+            }
+          ]
+        },
+        {
+          "strand": "Quantitative chemistry",
+          "topics": [
+            {
+              "id": "t8nptp6b",
+              "name": "Moles"
+            }
+          ]
+        },
+        {
+          "strand": "Chemical changes",
+          "topics": [
+            {
+              "id": "t43np8gn",
+              "name": "Acids and alkalis"
+            },
+            {
+              "id": "tait803w",
+              "name": "Reactivity"
+            }
+          ]
+        },
+        {
+          "strand": "Rates",
+          "topics": [
+            {
+              "id": "t2onmxtm",
+              "name": "Rates of reaction"
+            }
+          ]
+        }
+      ],
+      "biology|gcse": [
+        {
+          "strand": "Cells",
+          "topics": [
+            {
+              "id": "t6cjbcl5",
+              "name": "Cell structure"
+            },
+            {
+              "id": "t484ilab",
+              "name": "Cell division"
+            }
+          ]
+        },
+        {
+          "strand": "Organisation",
+          "topics": [
+            {
+              "id": "tzvyhng0",
+              "name": "Digestion"
+            },
+            {
+              "id": "t5owcgob",
+              "name": "The heart"
+            }
+          ]
+        },
+        {
+          "strand": "Infection",
+          "topics": [
+            {
+              "id": "t14emtqz",
+              "name": "Pathogens"
+            }
+          ]
+        },
+        {
+          "strand": "Bioenergetics",
+          "topics": [
+            {
+              "id": "tlgkou5c",
+              "name": "Photosynthesis"
+            },
+            {
+              "id": "tvigsdq3",
+              "name": "Respiration"
+            }
+          ]
+        },
+        {
+          "strand": "Ecology",
+          "topics": [
+            {
+              "id": "tjlkaj6p",
+              "name": "Ecosystems"
+            }
+          ]
+        }
+      ],
+      "english|gcse": [
+        {
+          "strand": "Reading",
+          "topics": [
+            {
+              "id": "twuo51mr",
+              "name": "Language analysis"
+            },
+            {
+              "id": "tyoz4s2a",
+              "name": "Structure"
+            }
+          ]
+        },
+        {
+          "strand": "Writing",
+          "topics": [
+            {
+              "id": "tikbk0we",
+              "name": "Descriptive writing"
+            },
+            {
+              "id": "t21ux9bd",
+              "name": "Persuasive writing"
+            }
+          ]
+        },
+        {
+          "strand": "Literature",
+          "topics": [
+            {
+              "id": "tyekkcpy",
+              "name": "Poetry"
+            },
+            {
+              "id": "ti9wokur",
+              "name": "Shakespeare"
+            }
+          ]
+        }
+      ],
+      "maths|ks3": [
+        {
+          "strand": "Number",
+          "topics": [
+            {
+              "id": "ty6xwt30",
+              "name": "Place value"
+            },
+            {
+              "id": "tqo0d1ap",
+              "name": "Fractions"
+            },
+            {
+              "id": "t4mbcsla",
+              "name": "Negative numbers"
+            }
+          ]
+        },
+        {
+          "strand": "Algebra",
+          "topics": [
+            {
+              "id": "tppk5dfh",
+              "name": "Expressions"
+            },
+            {
+              "id": "tt5f1djc",
+              "name": "Solving equations"
+            }
+          ]
+        },
+        {
+          "strand": "Geometry",
+          "topics": [
+            {
+              "id": "t505wf5o",
+              "name": "Angles"
+            },
+            {
+              "id": "tnmwnncx",
+              "name": "Area and perimeter"
+            }
+          ]
+        }
+      ],
+      "maths|alevel": [
+        {
+          "strand": "Pure",
+          "topics": [
+            {
+              "id": "tkrzrkyn",
+              "name": "Proof"
+            },
+            {
+              "id": "tr53t9c7",
+              "name": "Algebra and functions"
+            },
+            {
+              "id": "t8scli3e",
+              "name": "Differentiation"
+            },
+            {
+              "id": "t52uhn6k",
+              "name": "Integration"
+            }
+          ]
+        },
+        {
+          "strand": "Statistics",
+          "topics": [
+            {
+              "id": "tm8orhp2",
+              "name": "Data presentation"
+            },
+            {
+              "id": "tqh5v2j1",
+              "name": "Probability distributions"
+            }
+          ]
+        },
+        {
+          "strand": "Mechanics",
+          "topics": [
+            {
+              "id": "txmo5fkc",
+              "name": "Kinematics"
+            },
+            {
+              "id": "tkro4n3c",
+              "name": "Forces and Newton's laws"
+            }
+          ]
+        }
+      ],
+      "english|ks3": [
+        {
+          "strand": "Reading",
+          "topics": [
+            {
+              "id": "t8d59net",
+              "name": "Inference"
+            }
+          ]
+        },
+        {
+          "strand": "Writing",
+          "topics": [
+            {
+              "id": "t2vgjz6y",
+              "name": "Paragraphing"
+            }
+          ]
+        }
+      ],
+      "physics|alevel": [
+        {
+          "strand": "Mechanics",
+          "topics": [
+            {
+              "id": "tujh8qcn",
+              "name": "Motion"
+            }
+          ]
+        },
+        {
+          "strand": "Electricity",
+          "topics": [
+            {
+              "id": "t03pcdi7",
+              "name": "Circuits"
+            }
+          ]
+        }
+      ],
+      "chemistry|alevel": [
+        {
+          "strand": "Physical",
+          "topics": [
+            {
+              "id": "tza9vf92",
+              "name": "Energetics"
+            }
+          ]
+        }
+      ],
+      "biology|alevel": [
+        {
+          "strand": "Cells",
+          "topics": [
+            {
+              "id": "tzucmjnk",
+              "name": "Cell structure"
+            }
+          ]
+        }
+      ]
+    },
+    "plans": [
+      {
+        "id": "self",
+        "name": "Self-paced",
+        "tagline": "Learn at your own pace",
+        "prices": {
+          "ks3": "£—/month",
+          "gcse": "£—/month",
+          "alevel": "£—/month"
+        },
+        "live": 0,
+        "mocks": false,
+        "features": [
+          "Diagnostic and personal learning map",
+          "Lessons, notes and quizzes",
+          "Progress you can see"
+        ]
+      },
+      {
+        "id": "weekly",
+        "name": "Weekly class",
+        "tagline": "Our most popular plan",
+        "prices": {
+          "ks3": "£—/month",
+          "gcse": "£—/month",
+          "alevel": "£—/month"
+        },
+        "live": 1,
+        "mocks": false,
+        "popular": true,
+        "features": [
+          "Everything in Self-paced",
+          "1 live small-group class a week (max 10)",
+          "Monthly progress report for parents"
+        ]
+      },
+      {
+        "id": "intensive",
+        "name": "Exam intensive",
+        "tagline": "For mocks and exam season",
+        "prices": {
+          "ks3": "£—/month",
+          "gcse": "£—/month",
+          "alevel": "£—/month"
+        },
+        "live": 2,
+        "mocks": true,
+        "features": [
+          "Everything in Weekly class",
+          "2 live classes a week",
+          "Mock exams with marked feedback"
+        ]
+      }
+    ],
+    "diag": {
+      "maths|gcse": [
+        {
+          "q": "Work out $\\frac{3}{4} + \\frac{1}{6}$",
+          "o": [
+            "$\\frac{11}{12}$",
+            "$\\frac{4}{10}$",
+            "$\\frac{4}{24}$",
+            "$\\frac{1}{2}$"
+          ],
+          "c": 0,
+          "t": "t5glyecz",
+          "mis": [
+            null,
+            "Adding the tops and the bottoms"
+          ]
+        },
+        {
+          "q": "Increase $80$ by $15\\%$",
+          "o": [
+            "$95$",
+            "$92$",
+            "$12$",
+            "$68$"
+          ],
+          "c": 1,
+          "t": "tv3acjwk",
+          "mis": [
+            "Adding the percentage as a number"
+          ]
+        },
+        {
+          "q": "Work out $2x^2$ when $x = -3$",
+          "o": [
+            "$-18$",
+            "$36$",
+            "$18$",
+            "$-36$"
+          ],
+          "c": 2,
+          "t": "tbew4cgw",
+          "mis": [
+            "Squaring negative numbers"
+          ]
+        },
+        {
+          "q": "Which is equal to $(x + 3)^2$?",
+          "o": [
+            "$x^2 + 9$",
+            "$x^2 + 6x + 9$",
+            "$x^2 + 3x + 9$",
+            "$2x + 6$"
+          ],
+          "c": 1,
+          "t": "te0nlu4z",
+          "mis": [
+            "Thinking $(a + b)^2 = a^2 + b^2$"
+          ]
+        },
+        {
+          "q": "Factorise $x^2 + 5x + 6$",
+          "o": [
+            "$(x + 5)(x + 1)$",
+            "$(x + 6)(x - 1)$",
+            "$(x + 2)(x + 3)$",
+            "$x(x + 11)$"
+          ],
+          "c": 2,
+          "t": "tlabgle5",
+          "mis": [
+            "Matching the sum but not the product"
+          ]
+        },
+        {
+          "q": "Solve $x + y = 10$ and $x - y = 4$",
+          "o": [
+            "$x = 7,\\ y = 3$",
+            "$x = 3,\\ y = 7$",
+            "$x = 14,\\ y = -4$",
+            "$x = 5,\\ y = 5$"
+          ],
+          "c": 0,
+          "t": "to9guubt",
+          "mis": [
+            null,
+            "Mixing up which letter is which"
+          ]
+        },
+        {
+          "q": "Make $x$ the subject of $y = 3x + 2$",
+          "o": [
+            "$x = \\frac{y}{3} - 2$",
+            "$x = \\frac{y - 2}{3}$",
+            "$x = 3y - 2$",
+            "$x = \\frac{y + 2}{3}$"
+          ],
+          "c": 1,
+          "t": "tnauehim",
+          "mis": [
+            "Undoing steps in the wrong order"
+          ]
+        },
+        {
+          "q": "A right-angled triangle has shorter sides $6$ cm and $8$ cm. How long is the longest side?",
+          "o": [
+            "$14$ cm",
+            "$10$ cm",
+            "$48$ cm",
+            "$100$ cm"
+          ],
+          "c": 1,
+          "t": "thf5l4vk",
+          "mis": [
+            "Adding the sides instead of the squares"
+          ]
+        },
+        {
+          "q": "Which ratio uses the opposite side and the hypotenuse?",
+          "o": [
+            "$\\tan\\theta$",
+            "$\\cos\\theta$",
+            "$\\sin\\theta$",
+            "None of these"
+          ],
+          "c": 2,
+          "t": "t29zs3vq",
+          "mis": [
+            "Choosing the wrong trig ratio",
+            "Choosing the wrong trig ratio"
+          ]
+        },
+        {
+          "q": "The probability it rains is $0.3$. What is the probability it does not rain?",
+          "o": [
+            "$0.3$",
+            "$0.7$",
+            "$1.3$",
+            "$-0.3$"
+          ],
+          "c": 1,
+          "t": "tjax0tlp"
+        }
+      ],
+      "physics|gcse": [
+        {
+          "q": "Which is the unit of energy?",
+          "o": [
+            "Watt",
+            "Joule",
+            "Newton",
+            "Volt"
+          ],
+          "c": 1,
+          "t": "tpdqxg5x",
+          "mis": [
+            "Confusing energy and power"
+          ]
+        },
+        {
+          "q": "A kettle transfers $2000$ J in $10$ s. What is its power?",
+          "o": [
+            "$200$ W",
+            "$20\\,000$ W",
+            "$2010$ W",
+            "$0.005$ W"
+          ],
+          "c": 0,
+          "t": "tfppsrby",
+          "mis": [
+            null,
+            "Multiplying instead of dividing"
+          ]
+        },
+        {
+          "q": "Using $V = IR$: what is $V$ when $I = 2$ A and $R = 6\\ \\Omega$?",
+          "o": [
+            "$3$ V",
+            "$8$ V",
+            "$12$ V",
+            "$4$ V"
+          ],
+          "c": 2,
+          "t": "tq7r0of0",
+          "mis": [
+            "Dividing instead of multiplying"
+          ]
+        },
+        {
+          "q": "Density is mass divided by…",
+          "o": [
+            "volume",
+            "weight",
+            "area",
+            "temperature"
+          ],
+          "c": 0,
+          "t": "twxk6kba"
+        },
+        {
+          "q": "An object moves at a steady speed in a straight line. The resultant force is…",
+          "o": [
+            "forwards",
+            "zero",
+            "backwards",
+            "equal to its weight"
+          ],
+          "c": 1,
+          "t": "tai89tpd",
+          "mis": [
+            "Thinking motion needs a resultant force"
+          ]
+        },
+        {
+          "q": "Which wave has the shortest wavelength?",
+          "o": [
+            "Radio",
+            "Visible light",
+            "Microwave",
+            "Gamma"
+          ],
+          "c": 3,
+          "t": "t2l82kpm"
+        }
+      ]
+    }
+  },
+  "tutors": [
+    {
+      "id": "t1",
+      "name": "Ms Zainab",
+      "email": "zainab@example.com",
+      "phone": "+44 7700 900100",
+      "subjects": [
+        "maths"
+      ]
+    },
+    {
+      "id": "t2",
+      "name": "Mr Ahmed",
+      "email": "ahmed@example.com",
+      "phone": "+44 7700 900200",
+      "subjects": [
+        "physics",
+        "chemistry"
+      ]
+    }
+  ],
+  "groups": [
+    {
+      "id": "g1",
+      "name": "Thursday GCSE Maths (Higher)",
+      "subject": "maths",
+      "level": "gcse",
+      "tutorId": "t1",
+      "day": 3,
+      "start": "18:00",
+      "zoom": "zoom.us/j/[MEETING-ID-1]"
+    },
+    {
+      "id": "g2",
+      "name": "Saturday GCSE Physics",
+      "subject": "physics",
+      "level": "gcse",
+      "tutorId": "t2",
+      "day": 5,
+      "start": "11:00",
+      "zoom": "zoom.us/j/[MEETING-ID-2]"
+    },
+    {
+      "id": "g3",
+      "name": "Sunday GCSE Maths (Foundation)",
+      "subject": "maths",
+      "level": "gcse",
+      "tutorId": "t1",
+      "day": 6,
+      "start": "17:00",
+      "zoom": "zoom.us/j/[MEETING-ID-3]"
+    }
+  ],
+  "students": [
+    {
+      "id": "s1",
+      "name": "Bilal Raza",
+      "email": "bilal.r@example.com",
+      "year": "Year 11",
+      "level": "gcse",
+      "plan": "weekly",
+      "school": "",
+      "parent": {
+        "name": "Mrs Raza",
+        "email": "raza.family@example.com",
+        "phone": "+44 7700 900301"
+      },
+      "joined": 1790787902350,
+      "enrol": [
+        {
+          "id": "ey4a97m5",
+          "subject": "maths",
+          "level": "gcse",
+          "tier": "Higher",
+          "board": "AQA",
+          "current": "5",
+          "target": "7",
+          "groupId": "g1",
+          "tutorId": "t1",
+          "diagDone": true,
+          "diagScore": null,
+          "topics": {
+            "t5glyecz": "P",
+            "tv3acjwk": "M",
+            "tbew4cgw": "N",
+            "tgyp8vc5": "W",
+            "tsw7ths2": "P",
+            "te0nlu4z": "M",
+            "tlabgle5": "N",
+            "to9guubt": "W",
+            "tnauehim": "P",
+            "tpbn046s": "M",
+            "tn92ai1f": "N",
+            "to7t7p6r": "W",
+            "tb9es9q8": "P",
+            "t6fcexdh": "M",
+            "thf5l4vk": "N",
+            "t29zs3vq": "W",
+            "toamsfj8": "P",
+            "tjax0tlp": "M",
+            "tibebsi7": "N",
+            "ts19vn7j": "W",
+            "typ8ary1": "P",
+            "tzt5by2e": "M",
+            "tqrow744": "N",
+            "typ6xx88": "W"
+          },
+          "mins": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "id": "e16t0z2r",
+          "subject": "physics",
+          "level": "gcse",
+          "tier": "Higher",
+          "board": "AQA",
+          "current": "5",
+          "target": "6",
+          "groupId": "g2",
+          "tutorId": "t2",
+          "diagDone": true,
+          "diagScore": null,
+          "topics": {
+            "tpdqxg5x": "W",
+            "tfppsrby": "P",
+            "tdb0rawj": "M",
+            "t8yo6o4a": "N",
+            "tq7r0of0": "W",
+            "to6kgrqv": "P",
+            "twxk6kba": "M",
+            "tanir0ei": "N",
+            "tp8olnuz": "W",
+            "tv9dtu3x": "P",
+            "tbqgorx7": "M",
+            "tai89tpd": "N",
+            "tpimz4ua": "W",
+            "t6qa33z2": "P",
+            "t2l82kpm": "M",
+            "trhexus4": "N",
+            "tdj17ul3": "W"
+          },
+          "mins": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "s2",
+      "name": "Hira Javed",
+      "email": "hira.j@example.com",
+      "year": "Year 11",
+      "level": "gcse",
+      "plan": "intensive",
+      "school": "",
+      "parent": {
+        "name": "Mr Javed",
+        "email": "javed.home@example.com",
+        "phone": "+44 7700 900302"
+      },
+      "joined": 1789059902350,
+      "enrol": [
+        {
+          "id": "ev7kjdvk",
+          "subject": "maths",
+          "level": "gcse",
+          "tier": "Higher",
+          "board": "Edexcel",
+          "current": "7",
+          "target": "8",
+          "groupId": "g1",
+          "tutorId": "t1",
+          "diagDone": true,
+          "diagScore": null,
+          "topics": {
+            "t5glyecz": "M",
+            "tv3acjwk": "N",
+            "tbew4cgw": "W",
+            "tgyp8vc5": "P",
+            "tsw7ths2": "M",
+            "te0nlu4z": "N",
+            "tlabgle5": "W",
+            "to9guubt": "P",
+            "tnauehim": "M",
+            "tpbn046s": "N",
+            "tn92ai1f": "W",
+            "to7t7p6r": "P",
+            "tb9es9q8": "M",
+            "t6fcexdh": "N",
+            "thf5l4vk": "W",
+            "t29zs3vq": "P",
+            "toamsfj8": "M",
+            "tjax0tlp": "N",
+            "tibebsi7": "W",
+            "ts19vn7j": "P",
+            "typ8ary1": "M",
+            "tzt5by2e": "N",
+            "tqrow744": "W",
+            "typ6xx88": "P"
+          },
+          "mins": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "s3",
+      "name": "Zara Malik",
+      "email": "zara.m@example.com",
+      "year": "Year 10",
+      "level": "gcse",
+      "plan": "weekly",
+      "school": "",
+      "parent": {
+        "name": "Ms Malik",
+        "email": "malik.parent@example.com",
+        "phone": "+44 7700 900303"
+      },
+      "joined": 1792515902350,
+      "enrol": [
+        {
+          "id": "evgb0xk4",
+          "subject": "maths",
+          "level": "gcse",
+          "tier": "Foundation",
+          "board": "AQA",
+          "current": "3",
+          "target": "5",
+          "groupId": "g3",
+          "tutorId": "t1",
+          "diagDone": true,
+          "diagScore": null,
+          "topics": {
+            "t5glyecz": "N",
+            "tv3acjwk": "W",
+            "tbew4cgw": "P",
+            "tgyp8vc5": "M",
+            "tsw7ths2": "N",
+            "te0nlu4z": "W",
+            "tlabgle5": "P",
+            "to9guubt": "M",
+            "tnauehim": "N",
+            "tpbn046s": "W",
+            "tn92ai1f": "P",
+            "to7t7p6r": "M",
+            "tb9es9q8": "N",
+            "t6fcexdh": "W",
+            "thf5l4vk": "P",
+            "t29zs3vq": "M",
+            "toamsfj8": "N",
+            "tjax0tlp": "W",
+            "tibebsi7": "P",
+            "ts19vn7j": "M",
+            "typ8ary1": "N",
+            "tzt5by2e": "W",
+            "tqrow744": "P",
+            "typ6xx88": "M"
+          },
+          "mins": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "s4",
+      "name": "Usman Ali",
+      "email": "usman.a@example.com",
+      "year": "Year 11",
+      "level": "gcse",
+      "plan": "weekly",
+      "school": "",
+      "parent": {
+        "name": "Mr Ali",
+        "email": "ali.family@example.com",
+        "phone": "+44 7700 900304"
+      },
+      "joined": 1791219902350,
+      "enrol": [
+        {
+          "id": "e4uzzmlg",
+          "subject": "physics",
+          "level": "gcse",
+          "tier": "Higher",
+          "board": "AQA",
+          "current": "6",
+          "target": "7",
+          "groupId": "g2",
+          "tutorId": "t2",
+          "diagDone": true,
+          "diagScore": null,
+          "topics": {
+            "tpdqxg5x": "P",
+            "tfppsrby": "M",
+            "tdb0rawj": "N",
+            "t8yo6o4a": "W",
+            "tq7r0of0": "P",
+            "to6kgrqv": "M",
+            "twxk6kba": "N",
+            "tanir0ei": "W",
+            "tp8olnuz": "P",
+            "tv9dtu3x": "M",
+            "tbqgorx7": "N",
+            "tai89tpd": "W",
+            "tpimz4ua": "P",
+            "t6qa33z2": "M",
+            "t2l82kpm": "N",
+            "trhexus4": "W",
+            "tdj17ul3": "P"
+          },
+          "mins": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "s5",
+      "name": "Omar Tariq",
+      "email": "omar.t@example.com",
+      "year": "Year 12",
+      "level": "alevel",
+      "plan": "self",
+      "school": "",
+      "parent": {
+        "name": "Mrs Tariq",
+        "email": "tariq.home@example.com",
+        "phone": "+44 7700 900305"
+      },
+      "joined": 1793379902350,
+      "enrol": [
+        {
+          "id": "eorqhjaa",
+          "subject": "maths",
+          "level": "alevel",
+          "tier": "",
+          "board": "OCR",
+          "current": "B",
+          "target": "A",
+          "groupId": null,
+          "tutorId": "t1",
+          "diagDone": true,
+          "diagScore": null,
+          "topics": {},
+          "mins": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    }
+  ],
+  "items": [
+    {
+      "kind": "lesson",
+      "title": "The nth term",
+      "subject": "maths",
+      "level": "gcse",
+      "topic": "tpbn046s",
+      "blocks": [
+        {
+          "id": "b35dktw7",
+          "type": "slide",
+          "title": "Sequence basics",
+          "body": "A sequence is an ordered list of numbers. Each number is a term, and its position is $n$.\n\nIn $5n + 2$, the first term is when $n = 1$: $5(1) + 2 = 7$."
+        },
+        {
+          "id": "bpucvxzw",
+          "type": "mcq",
+          "question": "In the rule $5n + 2$, what does $n$ represent?",
+          "options": [
+            "The common difference",
+            "The number of terms",
+            "The position number",
+            "The first term"
+          ],
+          "correct": 2,
+          "explain": "$n$ is the position: 1st, 2nd, 3rd and so on."
+        },
+        {
+          "id": "bjbim375",
+          "type": "mcq",
+          "question": "What is the 4th term of $5n + 2$?",
+          "options": [
+            "$20$",
+            "$22$",
+            "$27$",
+            "$9$"
+          ],
+          "correct": 1,
+          "explain": "Substitute $n = 4$: $5(4) + 2 = 22$."
+        },
+        {
+          "id": "b08taqdm",
+          "type": "written",
+          "question": "Is $52$ a term in the sequence $5n + 2$? Show how you know.",
+          "markScheme": "1 mark: sets up 5n + 2 = 52. 1 mark: n = 10. 1 mark: concludes yes, it is the 10th term.",
+          "marks": 3
+        }
+      ],
+      "id": "izbs3hko",
+      "published": true,
+      "createdBy": "t1"
+    },
+    {
+      "kind": "notes",
+      "title": "Expanding brackets",
+      "subject": "maths",
+      "level": "gcse",
+      "topic": "te0nlu4z",
+      "blocks": [
+        {
+          "id": "bw7lrg93",
+          "type": "slide",
+          "title": "Single brackets",
+          "body": "Multiply the term outside by every term inside.\n\n$3(x + 4) = 3x + 12$"
+        },
+        {
+          "id": "bpjcw6p3",
+          "type": "slide",
+          "title": "Double brackets",
+          "body": "Use a grid so every term meets every other term.\n\n$(x + 2)(x + 5) = x^2 + 7x + 10$"
+        }
+      ],
+      "id": "ip1tq793",
+      "published": true,
+      "createdBy": "t1"
+    },
+    {
+      "kind": "video",
+      "title": "Squaring a bracket",
+      "subject": "maths",
+      "level": "gcse",
+      "topic": "te0nlu4z",
+      "blocks": [
+        {
+          "id": "b7w44qxv",
+          "type": "video",
+          "title": "Squaring brackets with the area model",
+          "url": "",
+          "note": "Watch the 6-minute video, pausing to try each example."
+        },
+        {
+          "id": "b2u4pt7g",
+          "type": "mcq",
+          "question": "Which is equal to $(x + 5)^2$?",
+          "options": [
+            "$x^2 + 25$",
+            "$x^2 + 10x + 25$",
+            "$x^2 + 5x + 25$",
+            "$2x + 10$"
+          ],
+          "correct": 1,
+          "explain": "$(x + 5)(x + 5) = x^2 + 5x + 5x + 25$."
+        }
+      ],
+      "id": "ivpmzixv",
+      "published": true,
+      "createdBy": "t1"
+    },
+    {
+      "kind": "quiz",
+      "title": "Simultaneous equations check",
+      "subject": "maths",
+      "level": "gcse",
+      "topic": "to9guubt",
+      "source": "Drive: Algebra/Sim eq worksheet.pdf",
+      "blocks": [
+        {
+          "id": "bb066fx1",
+          "type": "mcq",
+          "question": "Solve $2x + y = 11$ and $x + y = 7$",
+          "options": [
+            "$x = 2,\\ y = 5$",
+            "$x = 4,\\ y = 3$",
+            "$x = 3,\\ y = 4$",
+            "$x = 9,\\ y = -7$"
+          ],
+          "correct": 1,
+          "explain": "Subtract: $x = 4$, so $y = 3$."
+        },
+        {
+          "id": "b3bj8o5k",
+          "type": "mcq",
+          "question": "Solve $3x - y = 5$ and $x + y = 7$",
+          "options": [
+            "$x = 3,\\ y = 4$",
+            "$x = 2,\\ y = 5$",
+            "$x = 1,\\ y = 6$",
+            "$x = 3,\\ y = 2$"
+          ],
+          "correct": 0,
+          "explain": "Add: $4x = 12$, so $x = 3$ and $y = 4$."
+        },
+        {
+          "id": "bp4d1ps8",
+          "type": "written",
+          "question": "Solve $3x + 2y = 16$ and $5x - 2y = 8$. Show your working.",
+          "markScheme": "1 mark: adds to get 8x = 24. 1 mark: x = 3. 1 mark: y = 3.5.",
+          "marks": 3
+        }
+      ],
+      "id": "iy1mu7no",
+      "published": true,
+      "createdBy": "t1"
+    },
+    {
+      "kind": "notes",
+      "title": "Energy stores",
+      "subject": "physics",
+      "level": "gcse",
+      "topic": "tpdqxg5x",
+      "createdBy": "t2",
+      "blocks": [
+        {
+          "id": "b0sehyyl",
+          "type": "slide",
+          "title": "The 8 energy stores",
+          "body": "Kinetic, gravitational potential, elastic potential, thermal, chemical, magnetic, electrostatic and nuclear.\n\nEnergy is transferred between stores by heating, by forces, or by electric current."
+        }
+      ],
+      "id": "i663f7qf",
+      "published": true
+    },
+    {
+      "kind": "quiz",
+      "title": "Energy stores quiz",
+      "subject": "physics",
+      "level": "gcse",
+      "topic": "tpdqxg5x",
+      "createdBy": "t2",
+      "blocks": [
+        {
+          "id": "bykamsk8",
+          "type": "mcq",
+          "question": "A ball is lifted onto a shelf. Which store increases?",
+          "options": [
+            "Kinetic",
+            "Gravitational potential",
+            "Thermal",
+            "Nuclear"
+          ],
+          "correct": 1,
+          "explain": "Lifting raises its height, so its gravitational potential store increases."
+        },
+        {
+          "id": "bwankj5m",
+          "type": "mcq",
+          "question": "Calculate the kinetic energy of a $2$ kg ball at $3$ m/s using $E_k = \\frac{1}{2}mv^2$",
+          "options": [
+            "$3$ J",
+            "$6$ J",
+            "$9$ J",
+            "$18$ J"
+          ],
+          "correct": 2,
+          "explain": "$\\frac{1}{2} \\times 2 \\times 3^2 = 9$ J."
+        }
+      ],
+      "id": "iir41chy",
+      "published": true
+    }
+  ],
+  "routes": [
+    {
+      "id": "r1",
+      "name": "GCSE Maths Higher: algebra start",
+      "subject": "maths",
+      "level": "gcse",
+      "createdBy": "t1",
+      "steps": [
+        {
+          "item": "ip1tq793",
+          "week": 1
+        },
+        {
+          "item": "ivpmzixv",
+          "week": 1
+        },
+        {
+          "item": "izbs3hko",
+          "week": 2
+        },
+        {
+          "item": "iy1mu7no",
+          "week": 3
+        }
+      ],
+      "show": [
+        {
+          "type": "group",
+          "id": "g1"
+        }
+      ],
+      "assignedAt": 1793984702351
+    },
+    {
+      "id": "r2",
+      "name": "GCSE Physics: energy",
+      "subject": "physics",
+      "level": "gcse",
+      "createdBy": "t2",
+      "steps": [
+        {
+          "item": "i663f7qf",
+          "week": 1
+        },
+        {
+          "item": "iir41chy",
+          "week": 1
+        }
+      ],
+      "show": [
+        {
+          "type": "group",
+          "id": "g2"
+        }
+      ],
+      "assignedAt": 1793811902351
+    }
+  ],
+  "bookings": [
+    {
+      "id": "bkk3owtrw",
+      "kind": "group",
+      "groupId": "g1",
+      "tutorId": "t1",
+      "date": "2026-10-29",
+      "start": "18:00",
+      "mins": 60,
+      "zoom": "zoom.us/j/[MEETING-ID-1]",
+      "logged": true
+    },
+    {
+      "id": "bkzdnh4cz",
+      "kind": "group",
+      "groupId": "g2",
+      "tutorId": "t2",
+      "date": "2026-10-31",
+      "start": "11:00",
+      "mins": 60,
+      "zoom": "zoom.us/j/[MEETING-ID-2]",
+      "logged": true
+    },
+    {
+      "id": "bkldw35o5",
+      "kind": "group",
+      "groupId": "g3",
+      "tutorId": "t1",
+      "date": "2026-11-01",
+      "start": "17:00",
+      "mins": 60,
+      "zoom": "zoom.us/j/[MEETING-ID-3]",
+      "logged": true
+    },
+    {
+      "id": "bk5hr2pok",
+      "kind": "one",
+      "enrolId": "ev7kjdvk",
+      "tutorId": "t1",
+      "date": "2026-10-27",
+      "start": "17:00",
+      "mins": 60,
+      "zoom": "zoom.us/j/[MEETING-ID]",
+      "logged": true
+    },
+    {
+      "id": "bkrjvtynz",
+      "kind": "group",
+      "groupId": "g1",
+      "tutorId": "t1",
+      "date": "2026-11-05",
+      "start": "18:00",
+      "mins": 60,
+      "zoom": "zoom.us/j/[MEETING-ID-1]",
+      "logged": true
+    },
+    {
+      "id": "bkfji9yfh",
+      "kind": "group",
+      "groupId": "g2",
+      "tutorId": "t2",
+      "date": "2026-11-07",
+      "start": "11:00",
+      "mins": 60,
+      "zoom": "zoom.us/j/[MEETING-ID-2]",
+      "logged": false
+    },
+    {
+      "id": "bks2oitoz",
+      "kind": "group",
+      "groupId": "g3",
+      "tutorId": "t1",
+      "date": "2026-11-08",
+      "start": "17:00",
+      "mins": 60,
+      "zoom": "zoom.us/j/[MEETING-ID-3]",
+      "logged": true
+    },
+    {
+      "id": "bk6fuxf2w",
+      "kind": "one",
+      "enrolId": "ev7kjdvk",
+      "tutorId": "t1",
+      "date": "2026-11-03",
+      "start": "17:00",
+      "mins": 60,
+      "zoom": "zoom.us/j/[MEETING-ID]",
+      "logged": true
+    },
+    {
+      "id": "bk4d0bp2d",
+      "kind": "group",
+      "groupId": "g1",
+      "tutorId": "t1",
+      "date": "2026-11-12",
+      "start": "18:00",
+      "mins": 60,
+      "zoom": "zoom.us/j/[MEETING-ID-1]",
+      "logged": false
+    },
+    {
+      "id": "bkylis620",
+      "kind": "group",
+      "groupId": "g2",
+      "tutorId": "t2",
+      "date": "2026-11-14",
+      "start": "11:00",
+      "mins": 60,
+      "zoom": "zoom.us/j/[MEETING-ID-2]",
+      "logged": false
+    },
+    {
+      "id": "bk6k7j12c",
+      "kind": "group",
+      "groupId": "g3",
+      "tutorId": "t1",
+      "date": "2026-11-15",
+      "start": "17:00",
+      "mins": 60,
+      "zoom": "zoom.us/j/[MEETING-ID-3]",
+      "logged": false
+    },
+    {
+      "id": "bkku7e20v",
+      "kind": "one",
+      "enrolId": "ev7kjdvk",
+      "tutorId": "t1",
+      "date": "2026-11-10",
+      "start": "17:00",
+      "mins": 60,
+      "zoom": "zoom.us/j/[MEETING-ID]",
+      "logged": false
+    },
+    {
+      "id": "bk977wy7m",
+      "kind": "group",
+      "groupId": "g1",
+      "tutorId": "t1",
+      "date": "2026-11-19",
+      "start": "18:00",
+      "mins": 60,
+      "zoom": "zoom.us/j/[MEETING-ID-1]",
+      "logged": false
+    },
+    {
+      "id": "bkw8ou91g",
+      "kind": "group",
+      "groupId": "g2",
+      "tutorId": "t2",
+      "date": "2026-11-21",
+      "start": "11:00",
+      "mins": 60,
+      "zoom": "zoom.us/j/[MEETING-ID-2]",
+      "logged": false
+    },
+    {
+      "id": "bkqins9v2",
+      "kind": "group",
+      "groupId": "g3",
+      "tutorId": "t1",
+      "date": "2026-11-22",
+      "start": "17:00",
+      "mins": 60,
+      "zoom": "zoom.us/j/[MEETING-ID-3]",
+      "logged": false
+    },
+    {
+      "id": "bknzcvs94",
+      "kind": "one",
+      "enrolId": "ev7kjdvk",
+      "tutorId": "t1",
+      "date": "2026-11-17",
+      "start": "17:00",
+      "mins": 60,
+      "zoom": "zoom.us/j/[MEETING-ID]",
+      "logged": false
+    },
+    {
+      "id": "bk6zg3kts",
+      "kind": "group",
+      "groupId": "g1",
+      "tutorId": "t1",
+      "date": "2026-11-26",
+      "start": "18:00",
+      "mins": 60,
+      "zoom": "zoom.us/j/[MEETING-ID-1]",
+      "logged": false
+    },
+    {
+      "id": "bk924yp2g",
+      "kind": "group",
+      "groupId": "g2",
+      "tutorId": "t2",
+      "date": "2026-11-28",
+      "start": "11:00",
+      "mins": 60,
+      "zoom": "zoom.us/j/[MEETING-ID-2]",
+      "logged": false
+    },
+    {
+      "id": "bkm353v6y",
+      "kind": "group",
+      "groupId": "g3",
+      "tutorId": "t1",
+      "date": "2026-11-29",
+      "start": "17:00",
+      "mins": 60,
+      "zoom": "zoom.us/j/[MEETING-ID-3]",
+      "logged": false
+    },
+    {
+      "id": "bkovd82i2",
+      "kind": "one",
+      "enrolId": "ev7kjdvk",
+      "tutorId": "t1",
+      "date": "2026-11-24",
+      "start": "17:00",
+      "mins": 60,
+      "zoom": "zoom.us/j/[MEETING-ID]",
+      "logged": false
+    },
+    {
+      "id": "bk6c6pnnd",
+      "kind": "group",
+      "groupId": "g1",
+      "tutorId": "t1",
+      "date": "2026-12-03",
+      "start": "18:00",
+      "mins": 60,
+      "zoom": "zoom.us/j/[MEETING-ID-1]",
+      "logged": false
+    },
+    {
+      "id": "bk38n7ago",
+      "kind": "group",
+      "groupId": "g2",
+      "tutorId": "t2",
+      "date": "2026-12-05",
+      "start": "11:00",
+      "mins": 60,
+      "zoom": "zoom.us/j/[MEETING-ID-2]",
+      "logged": false
+    },
+    {
+      "id": "bkw2csq75",
+      "kind": "group",
+      "groupId": "g3",
+      "tutorId": "t1",
+      "date": "2026-12-06",
+      "start": "17:00",
+      "mins": 60,
+      "zoom": "zoom.us/j/[MEETING-ID-3]",
+      "logged": false
+    },
+    {
+      "id": "bk6d4qp9s",
+      "kind": "one",
+      "enrolId": "ev7kjdvk",
+      "tutorId": "t1",
+      "date": "2026-12-01",
+      "start": "17:00",
+      "mins": 60,
+      "zoom": "zoom.us/j/[MEETING-ID]",
+      "logged": false
+    },
+    {
+      "id": "bks5hruqd",
+      "kind": "group",
+      "groupId": "g1",
+      "tutorId": "t1",
+      "date": "2026-12-10",
+      "start": "18:00",
+      "mins": 60,
+      "zoom": "zoom.us/j/[MEETING-ID-1]",
+      "logged": false
+    },
+    {
+      "id": "bkicdrs3e",
+      "kind": "group",
+      "groupId": "g2",
+      "tutorId": "t2",
+      "date": "2026-12-12",
+      "start": "11:00",
+      "mins": 60,
+      "zoom": "zoom.us/j/[MEETING-ID-2]",
+      "logged": false
+    },
+    {
+      "id": "bk0c9se7d",
+      "kind": "group",
+      "groupId": "g3",
+      "tutorId": "t1",
+      "date": "2026-12-13",
+      "start": "17:00",
+      "mins": 60,
+      "zoom": "zoom.us/j/[MEETING-ID-3]",
+      "logged": false
+    },
+    {
+      "id": "bkrsh6vpn",
+      "kind": "one",
+      "enrolId": "ev7kjdvk",
+      "tutorId": "t1",
+      "date": "2026-12-08",
+      "start": "17:00",
+      "mins": 60,
+      "zoom": "zoom.us/j/[MEETING-ID]",
+      "logged": false
+    },
+    {
+      "id": "bko8zwkho",
+      "kind": "group",
+      "groupId": "g1",
+      "tutorId": "t1",
+      "date": "2026-12-17",
+      "start": "18:00",
+      "mins": 60,
+      "zoom": "zoom.us/j/[MEETING-ID-1]",
+      "logged": false
+    },
+    {
+      "id": "bkfwryv3f",
+      "kind": "group",
+      "groupId": "g2",
+      "tutorId": "t2",
+      "date": "2026-12-19",
+      "start": "11:00",
+      "mins": 60,
+      "zoom": "zoom.us/j/[MEETING-ID-2]",
+      "logged": false
+    },
+    {
+      "id": "bk5tdng29",
+      "kind": "group",
+      "groupId": "g3",
+      "tutorId": "t1",
+      "date": "2026-12-20",
+      "start": "17:00",
+      "mins": 60,
+      "zoom": "zoom.us/j/[MEETING-ID-3]",
+      "logged": false
+    },
+    {
+      "id": "bkg66gtky",
+      "kind": "one",
+      "enrolId": "ev7kjdvk",
+      "tutorId": "t1",
+      "date": "2026-12-15",
+      "start": "17:00",
+      "mins": 60,
+      "zoom": "zoom.us/j/[MEETING-ID]",
+      "logged": false
+    }
+  ],
+  "logs": [
+    {
+      "id": "lgphqb9cw",
+      "bookingId": "bkk3owtrw",
+      "date": "2026-10-29",
+      "tutorId": "t1",
+      "present": null,
+      "attendance": "Attended",
+      "topics": "Simultaneous equations",
+      "wentWell": "Good use of the method on exam-style questions.",
+      "nextStep": "Practise mixed questions and show full working.",
+      "homework": "Quiz on the platform",
+      "engagement": 4,
+      "focus": 4,
+      "at": 1793214000000
+    },
+    {
+      "id": "lgcxf18i8",
+      "bookingId": "bkzdnh4cz",
+      "date": "2026-10-31",
+      "tutorId": "t2",
+      "present": null,
+      "attendance": "Attended",
+      "topics": "Energy stores",
+      "wentWell": "Good use of the method on exam-style questions.",
+      "nextStep": "Practise mixed questions and show full working.",
+      "homework": "Quiz on the platform",
+      "engagement": 4,
+      "focus": 4,
+      "at": 1793386800000
+    },
+    {
+      "id": "lgn6kyl9l",
+      "bookingId": "bkldw35o5",
+      "date": "2026-11-01",
+      "tutorId": "t1",
+      "present": null,
+      "attendance": "Attended",
+      "topics": "Simultaneous equations",
+      "wentWell": "Good use of the method on exam-style questions.",
+      "nextStep": "Practise mixed questions and show full working.",
+      "homework": "Quiz on the platform",
+      "engagement": 4,
+      "focus": 4,
+      "at": 1793473200000
+    },
+    {
+      "id": "lg1j661cn",
+      "bookingId": "bk5hr2pok",
+      "date": "2026-10-27",
+      "tutorId": "t1",
+      "present": null,
+      "attendance": "Attended",
+      "topics": "Simultaneous equations",
+      "wentWell": "Good use of the method on exam-style questions.",
+      "nextStep": "Practise mixed questions and show full working.",
+      "homework": "Quiz on the platform",
+      "engagement": 4,
+      "focus": 4,
+      "at": 1793041200000
+    },
+    {
+      "id": "lgytbwwdq",
+      "bookingId": "bkrjvtynz",
+      "date": "2026-11-05",
+      "tutorId": "t1",
+      "present": null,
+      "attendance": "Attended",
+      "topics": "Simultaneous equations",
+      "wentWell": "Good use of the method on exam-style questions.",
+      "nextStep": "Practise mixed questions and show full working.",
+      "homework": "Quiz on the platform",
+      "engagement": 4,
+      "focus": 4,
+      "at": 1793818800000
+    },
+    {
+      "id": "lglfi7xqb",
+      "bookingId": "bks2oitoz",
+      "date": "2026-11-08",
+      "tutorId": "t1",
+      "present": null,
+      "attendance": "Attended",
+      "topics": "Simultaneous equations",
+      "wentWell": "Good use of the method on exam-style questions.",
+      "nextStep": "Practise mixed questions and show full working.",
+      "homework": "Quiz on the platform",
+      "engagement": 4,
+      "focus": 4,
+      "at": 1794078000000
+    },
+    {
+      "id": "lgzm0iow1",
+      "bookingId": "bk6fuxf2w",
+      "date": "2026-11-03",
+      "tutorId": "t1",
+      "present": null,
+      "attendance": "Attended",
+      "topics": "Simultaneous equations",
+      "wentWell": "Good use of the method on exam-style questions.",
+      "nextStep": "Practise mixed questions and show full working.",
+      "homework": "Quiz on the platform",
+      "engagement": 4,
+      "focus": 4,
+      "at": 1793646000000
+    }
+  ],
+  "threads": [
+    {
+      "id": "th1",
+      "studentId": "s1",
+      "tutorId": "t1",
+      "msgs": [
+        {
+          "from": "student",
+          "text": "Miss, is Thursday's class still at 6?",
+          "at": 1794157502353
+        },
+        {
+          "from": "tutor",
+          "text": "Yes, 6pm as usual. See you there!",
+          "at": 1794161902353
+        }
+      ]
+    },
+    {
+      "id": "th2",
+      "studentId": "s3",
+      "tutorId": "t1",
+      "msgs": [
+        {
+          "from": "student",
+          "text": "I don't get why $(x + 3)^2$ isn't $x^2 + 9$",
+          "at": 1794236702353
+        }
+      ]
+    },
+    {
+      "id": "th3",
+      "studentId": "s4",
+      "tutorId": "t2",
+      "msgs": [
+        {
+          "from": "tutor",
+          "text": "Great work on the energy quiz, Usman.",
+          "at": 1794071102353
+        }
+      ]
+    }
+  ],
+  "results": [],
+  "seen": {}
+}

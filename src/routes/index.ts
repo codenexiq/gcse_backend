@@ -2,30 +2,22 @@ import { Router } from "express";
 import { authenticate } from "../middleware/authenticate/index.js";
 import healthRoutes from "../modules/health/health.routes.js";
 import authRoutes from "../modules/auth/auth.routes.js";
-import subjectRoutes from "../modules/subjects/subject.routes.js";
-import itemRoutes from "../modules/items/item.routes.js";
 import profileRoutes from "../modules/profile/profile.routes.js";
 import chatRoutes from "../modules/chat/chat.routes.js";
-import lessonRoutes from "../modules/lesson/lesson.routes.js";
-import studentRoutes from "../modules/student/student.routes.js";
-import tutorRoutes from "../modules/tutor/tutor.routes.js";
-import quizRoutes from "../modules/quiz/quiz.routes.js";
+import adminRoutes from "../modules/admin/admin.routes.js";
+import { siteRoutes } from "../modules/site/site.routes.js";
 
 const router = Router();
 
 // Public routes (no login needed)
 router.use("/health", healthRoutes);
 router.use("/auth", authRoutes);
-router.use("/subjects", subjectRoutes); // read-only school subjects/topics, shown on the public home page
+router.use("/site", siteRoutes); // the public website: its content and the contact form
 
 // Everything below needs a logged-in user (secure by default).
 router.use(authenticate);
-router.use("/items", itemRoutes);
 router.use("/profile", profileRoutes); // everyone manages their own profile (the account comes from the session)
+router.use("/admin", adminRoutes); // the admin dashboard (admins only; checked inside)
 router.use("/chat", chatRoutes); // students and tutors talk to each other (the role decides what each can reach)
-router.use("/student", studentRoutes); // the student workflow (students only; checked inside)
-router.use("/lessons", lessonRoutes); // lessons: tutors build them, students open published ones and are scored by the server
-router.use("/quizzes", quizRoutes); // uploaded multiple-choice quizzes (tutors upload, students answer; the role decides what each can do)
-router.use("/tutor", tutorRoutes); // each route inside checks the role (tutor / admin)
 
 export default router;
