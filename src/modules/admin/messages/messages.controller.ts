@@ -15,5 +15,5 @@ export const thread = asyncHandler(async (req, res) => {
 });
 export const send = asyncHandler(async (req, res) => {
   const { student, staff } = pair(req);
-  res.status(201).json(await Messages.send(student, staff, req.user!.id, req.body.text));
+  res.status(201).json(await Messages.send(student, staff, req.user!.id, req.body));
 });

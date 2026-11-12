@@ -2,13 +2,14 @@ import rateLimit from "express-rate-limit";
 
 const base = { standardHeaders: true, legacyHeaders: false };
 
-// Every route: 100 requests / 15 minutes / IP.
+// Every route: 1500 requests / 15 minutes / IP. The student, teacher and admin panels make several calls per page
+// and a whole class can share one school IP, so this is generous; sign-in has its own strict limit below.
 export const globalLimiter = rateLimit({
   ...base,
   // Chat is checked every few seconds while it is open, so it has its own limits below.
-  skip: (req) => req.originalUrl.startsWith("/api/chat/"),
+  skip: (req) => req.originalUrl.startsWith("/api/chat/") || (req.method === "GET" && /^\/api\/(student|tutor|admin)\/messages\//.test(req.originalUrl)),
   windowMs: 15 * 60 * 1000,
-  limit: 100,
+  limit: 1500,
   message: { message: "Too many requests, please try again later" },
 });
 
@@ -50,4 +51,13 @@ export const enquiryLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   limit: 5,
   message: { message: "You have sent several messages already. Please try again later, or email us." },
+});
+
+// The messages screens check for new messages every few seconds while a chat is open (GET only), so they get plenty of room:
+// about 50 open chats behind one school IP. Sending has its own limit.
+export const messageReadLimiter = rateLimit({
+  ...base,
+  windowMs: 15 * 60 * 1000,
+  limit: 5000,
+  message: { message: "Too many requests, please try again in a few minutes" },
 });

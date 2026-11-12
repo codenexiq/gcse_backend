@@ -1,4 +1,5 @@
 import type { RowDataPacket } from "mysql2";
+import { saveMessage, type SendMessageInput } from "../../chat/messageWithFile.js";
 import { pool } from "../../../config/db/index.js";
 import { AppError } from "../../../utils/AppError/index.js";
 
@@ -40,7 +41,7 @@ export async function thread(studentId: number, staffId: number) {
   const t = rows[0];
   if (!t) throw new AppError(404, "Conversation not found");
   const [msgs] = await pool.query<RowDataPacket[]>(
-    `SELECT m.id, m.body, m.created_at, u.role AS sender_role, a.file_name, a.size
+    `SELECT m.id, m.body, m.created_at, u.role AS sender_role, a.id AS file_id, a.file_name, a.size
        FROM chat_messages m JOIN users u ON u.id = m.sender_id LEFT JOIN chat_attachments a ON a.id = m.attachment_id
       WHERE m.student_id = ? AND m.staff_id = ? ORDER BY m.id`,
     [studentId, staffId]
@@ -53,15 +54,15 @@ export async function thread(studentId: number, staffId: number) {
       id: m.id as number,
       from: m.sender_role as "student" | "tutor" | "admin",
       text: (m.body ?? "") as string,
-      attachment: m.file_name ? { name: m.file_name as string, size: Number(m.size ?? 0) } : null,
+      attachment: m.file_name ? { id: m.file_id as number, name: m.file_name as string, size: Number(m.size ?? 0) } : null,
       at: m.created_at as string,
     })),
   };
 }
 
 /** The admin replies in a conversation; both people see it in their chat. */
-export async function send(studentId: number, staffId: number, adminId: number, text: string) {
+export async function send(studentId: number, staffId: number, adminId: number, input: SendMessageInput) {
   await thread(studentId, staffId);
-  await pool.query("INSERT INTO chat_messages (student_id, staff_id, sender_id, body) VALUES (?, ?, ?, ?)", [studentId, staffId, adminId, text]);
+  await saveMessage(studentId, staffId, adminId, input);
   return thread(studentId, staffId);
 }

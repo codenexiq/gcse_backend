@@ -36,24 +36,3 @@ export async function usernameTaken(username: string, exceptId = 0) {
 
 /** An account's unique User ID, made from the account number (so it can never repeat): STU-00042, TUT-00002 or ADM-00001. */
 export const userCode = (role: Role, id: number) => `${role === "tutor" ? "TUT" : role === "admin" ? "ADM" : "STU"}-${String(id).padStart(5, "0")}`;
-
-/** Accounts made through the website (or by an admin) are always students. Tutors are made with `npm run tutor:create`. */
-export async function create({ fullName, email, passwordHash }: { fullName: string; email: string; passwordHash: string }) {
-  const conn = await pool.getConnection();
-  try {
-    await conn.beginTransaction();
-    const [result] = await conn.query<ResultSetHeader>(
-      "INSERT INTO users (full_name, email, password_hash, role) VALUES (?, ?, ?, 'student')",
-      [fullName, email, passwordHash]
-    );
-    const code = userCode("student", result.insertId);
-    await conn.query("UPDATE users SET user_code = ? WHERE id = ?", [code, result.insertId]);
-    await conn.commit();
-    return { id: result.insertId, fullName, email, role: "student" as const, userCode: code };
-  } catch (err) {
-    await conn.rollback();
-    throw err;
-  } finally {
-    conn.release();
-  }
-}

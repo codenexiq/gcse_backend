@@ -6,6 +6,7 @@ import messageRoutes from "./messages/messages.routes.js";
 import overviewRoutes from "./overview/overview.routes.js";
 import peopleRoutes from "./people/people.routes.js";
 import reportRoutes from "./reports/reports.routes.js";
+import viewAsRoutes from "./viewAs/viewAs.routes.js";
 import settingsRoutes from "./settings/settings.routes.js";
 
 // Mounted at /admin. Only admins may use anything below.
@@ -17,6 +18,7 @@ router.use("/overview", overviewRoutes); // the Overview tab
 router.use("/reports", reportRoutes); // monthly reports waiting to be sent to parents
 router.use("/people", peopleRoutes); // students, tutors, groups
 router.use("/messages", messageRoutes); // read every conversation, reply as the team
+router.use("/view-as", viewAsRoutes); // which teacher or student the admin is looking at in their panels
 router.use("/settings", settingsRoutes); // levels, subjects, topics, plans, sign-up
 
 export default router;

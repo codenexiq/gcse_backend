@@ -1,4 +1,2 @@
-import { z } from "zod";
-
-export const sendMessageSchema = z.object({ text: z.string().trim().min(1, "Write a message first.").max(2000) });
-export type SendMessageInput = z.infer<typeof sendMessageSchema>;
+// The message the student, teacher and admin screens send (text, a file, or both) lives with the shared chat code.
+export { sendMessageSchema, type SendMessageInput } from "../../chat/messageWithFile.js";

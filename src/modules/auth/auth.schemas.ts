@@ -14,19 +14,9 @@ export const passwordRule = z
 /** A short unique @name: lower case letters, numbers, dots and underscores. */
 export const usernameRule = z.string().trim().toLowerCase().regex(/^[a-z0-9_.]{3,30}$/, "Username must be 3-30 letters, numbers, dots or underscores");
 
-export const registerSchema = z.object({
-  fullName: z
-    .string()
-    .trim()
-    .min(1, "Full name is required")
-    .max(100, "Full name must be at most 100 characters"),
-  email,
-  password: passwordRule,
-});
-
 export const loginSchema = z.object({
   email,
   password: z.string().min(1, "Password is required").max(72),
 });
 
-export type Credentials = z.infer<typeof registerSchema>;
+export type Credentials = z.infer<typeof loginSchema>;

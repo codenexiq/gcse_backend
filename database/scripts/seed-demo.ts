@@ -1,241 +1,218 @@
-// Fills the LOCAL database with the sample data from the Educate Cloud prototype, so the whole flow can be checked with real rows:
-// 3 groups, 6 students (with diagnostic results, topic statuses, practice time and a latest score), a 5-series booking calendar with session logs,
-// the published lessons, the Algebra foundations route, and the sample chats.
+// Fills the database with a small, believable school so every screen has something to show:
+// 2 teachers, 10 students (1-2 subjects each), 2 weekly groups, diagnostic results, learning-map statuses, study time,
+// recent results, booked and logged lessons, lessons and a learning route, completed tasks, monthly reports and chats.
 //
-//   npm run db:seed-demo       adds it (any earlier demo data is removed first, so it is safe to repeat)
+//   npm run db:seed-demo       adds it (earlier demo data is removed first, so it is safe to repeat)
 //   npm run db:unseed-demo     removes it again
 //
-// Demo students sign in with their email (firstname.lastname@demo.educate.local) and the password below. Nothing else in the database is touched.
-import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+// Every demo account uses an email ending @demo.educate.local and the password below. Nothing else in the database is touched.
+// Sign in as a teacher on the Teacher tab (sarah.bennett@... / david.okafor@...) and as a student on the Student tab.
 import bcrypt from "bcryptjs";
-import type { ResultSetHeader, RowDataPacket } from "mysql2";
-import { pool } from "../../src/config/db/index.js";
-import { userCode } from "../../src/modules/auth/user.model.js";
+import type { Connection, ResultSetHeader, RowDataPacket } from "mysql2/promise";
+import { connect, dbName } from "./connection.js";
 
 const PASSWORD = "Demo1234!";
 const DOMAIN = "demo.educate.local";
-const SERIES = "demo-";
 
-interface Data {
-  STRANDS: [string, string[]][];
-  QUESTIONS: { topic: string; q: string; opts: [string, number, string?][] }[];
-  GROUPS: { id: string; name: string; day: string; time: string; focus: string[]; zoom: string }[];
-  SAMPLE: { name: string; score: number; group: string; mastery: number; mins: number; topics: number; last: string }[];
-  LESSONS: Record<string, { id: string; title: string; published: boolean; kind?: string; blocks: unknown[] }[]>;
-  ROUTES: { id: string; name: string; desc: string; items: { lesson: string; week: number }[]; assigned: string[] }[];
-  MESSAGES: { name: string; msgs: { from: "student" | "teacher"; text: string; at: number }[] }[];
-}
+const TEACHERS = [
+  { name: "Sarah Bennett", subjects: ["maths"], headline: "GCSE and A-level Maths" },
+  { name: "David Okafor", subjects: ["physics", "chemistry"], headline: "GCSE Physics and Chemistry" },
+];
 
-const data = JSON.parse(fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "seed", "prototype-data.json"), "utf8")) as Data;
+// level is always GCSE here. subs: subject -> [tier, board, current grade, target grade, diagnostic score % (null = not done yet)]
+type Sub = [string, string, string, string, number | null];
+const STUDENTS: { name: string; year: string; plan: string; parent: string; subs: Record<string, Sub>; group?: string }[] = [
+  { name: "Aisha Khan", year: "Year 11", plan: "weekly", parent: "Nadia Khan", subs: { maths: ["Higher", "AQA", "5", "7", 64] }, group: "maths" },
+  { name: "Ben Carter", year: "Year 10", plan: "intensive", parent: "Paul Carter", subs: { maths: ["Higher", "Edexcel", "6", "8", 78], physics: ["Higher", "AQA", "5", "7", 55] }, group: "maths" },
+  { name: "Chloe Evans", year: "Year 11", plan: "weekly", parent: "Helen Evans", subs: { maths: ["Foundation", "AQA", "3", "5", 41] }, group: "maths" },
+  { name: "Daniel Park", year: "Year 10", plan: "self", parent: "Min-jun Park", subs: { maths: ["Higher", "OCR", "4", "6", 52] }, group: "maths" },
+  { name: "Emma Rossi", year: "Year 11", plan: "weekly", parent: "Marco Rossi", subs: { maths: ["Higher", "AQA", "6", "8", 82], physics: ["Higher", "AQA", "6", "7", 70] }, group: "maths" },
+  { name: "Farhan Ali", year: "Year 10", plan: "weekly", parent: "Samira Ali", subs: { physics: ["Higher", "AQA", "4", "6", 48] }, group: "physics" },
+  { name: "Grace Liu", year: "Year 11", plan: "intensive", parent: "Wei Liu", subs: { physics: ["Higher", "AQA", "7", "9", 88], chemistry: ["Higher", "AQA", "6", "8", 74] }, group: "physics" },
+  { name: "Harry Wilson", year: "Year 9", plan: "self", parent: "Jo Wilson", subs: { chemistry: ["Foundation", "Edexcel", "3", "5", 36] } },
+  { name: "Isla Murray", year: "Year 11", plan: "weekly", parent: "Fiona Murray", subs: { maths: ["Higher", "AQA", "5", "6", null] } },
+  { name: "Jamal Reed", year: "Year 10", plan: "weekly", parent: "Tanya Reed", subs: { maths: ["Higher", "AQA", "5", "7", 58], physics: ["Foundation", "AQA", "4", "5", null] }, group: "physics" },
+];
 
 const emailOf = (name: string) => `${name.toLowerCase().replace(/\s+/g, ".")}@${DOMAIN}`;
-const DAY_INDEX: Record<string, number> = { MON: 0, TUE: 1, WED: 2, THU: 3, FRI: 4, SAT: 5, SUN: 6 };
 const ymd = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-const addDays = (d: Date, n: number) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+const addDays = (n: number) => { const d = new Date(); d.setDate(d.getDate() + n); return d; };
+/** The next date (today or later) that falls on this weekday (Mon = 0 ... Sun = 6). */
+const nextWeekday = (dow: number, plusWeeks = 0) => { const d = new Date(); d.setDate(d.getDate() + ((dow - ((d.getDay() + 6) % 7) + 7) % 7) + plusWeeks * 7); return d; };
+/** A small repeatable "random": the same names always get the same numbers. */
+function hash(s: string) { let h = 7; for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; }
 
-/** "6:00 – 7:00 pm" -> ["18:00", "19:00"]; "11:00 am – 12:00 pm" -> ["11:00", "12:00"] */
-function times(text: string): [string, string] {
-  const [a, b] = text.split(/\s*[\u2013-]\s*/);
-  const mer = (s: string) => (/pm/i.test(s) ? "pm" : /am/i.test(s) ? "am" : "");
-  const endMer = mer(b);
-  const to24 = (s: string, fallback: string) => {
-    const [h, m] = s.replace(/[^\d:]/g, "").split(":").map(Number);
-    const m2 = mer(s) || fallback;
-    return `${String(m2 === "pm" ? (h % 12) + 12 : h % 12).padStart(2, "0")}:${String(m || 0).padStart(2, "0")}`;
-  };
-  return [to24(a, endMer), to24(b, endMer)];
-}
-
-async function remove() {
-  const [users] = await pool.query<RowDataPacket[]>("SELECT id FROM users WHERE email LIKE ?", [`%@${DOMAIN}`]);
+async function remove(db: Connection) {
+  const [users] = await db.query<RowDataPacket[]>("SELECT id FROM users WHERE email LIKE ?", [`%@${DOMAIN}`]);
   const ids = users.map((u) => u.id as number);
-  // Logs stay when their booking goes, so take them out first.
-  await pool.query("DELETE FROM lesson_logs WHERE booking_id IN (SELECT id FROM session_bookings WHERE series_id LIKE ?)", [`${SERIES}%`]);
-  await pool.query("DELETE FROM session_bookings WHERE series_id LIKE ?", [`${SERIES}%`]);
-  await pool.query("DELETE FROM session_groups WHERE name IN (?)", [data.GROUPS.map((g) => g.name)]);
-  await pool.query("DELETE FROM learning_routes WHERE name IN (?)", [data.ROUTES.map((r) => r.name)]);
-  const titles = Object.values(data.LESSONS).flat().map((l) => l.title);
-  await pool.query("DELETE FROM lessons WHERE title IN (?)", [titles]);
-  if (ids.length > 0) {
-    await pool.query("DELETE FROM chat_messages WHERE student_id IN (?)", [ids]);
-    await pool.query("DELETE FROM users WHERE id IN (?)", [ids]);
+  if (ids.length) {
+    // These keep their rows (the link just becomes empty) when a person goes, so take them out first.
+    await db.query("DELETE FROM learning_routes WHERE created_by IN (?)", [ids]);
+    await db.query("DELETE FROM content_items WHERE created_by IN (?)", [ids]);
+    await db.query("DELETE FROM session_groups WHERE tutor_id IN (?)", [ids]);
+    await db.query("DELETE FROM users WHERE id IN (?)", [ids]);
   }
   return ids.length;
 }
 
-async function seed() {
-  const [tutors] = await pool.query<RowDataPacket[]>("SELECT id, full_name FROM users WHERE role IN ('tutor', 'admin') ORDER BY (role = 'tutor') DESC, id LIMIT 1");
-  if (tutors.length === 0) throw new Error("There is no tutor or admin account to own the demo data. Create one first (npm run tutor:create).");
-  const tutor = { id: tutors[0].id as number, name: (tutors[0].full_name as string) || "Tutor" };
-
-  const option = async (category: string, label: string) => {
-    const [rows] = await pool.query<RowDataPacket[]>("SELECT id FROM startup_options WHERE category = ? AND label = ?", [category, label]);
-    if (rows.length === 0) throw new Error(`The start-up option "${label}" (${category}) is missing. Run the migrations first.`);
-    return rows[0].id as number;
-  };
-  const profile = { subject: await option("subject", "Maths"), board: await option("exam_board", "AQA"), year: await option("school_year", "Year 11"), target: await option("target_grade", "7") };
-
-  const hash = await bcrypt.hash(PASSWORD, 10);
-  const allTopics = data.STRANDS.flatMap(([, t]) => t);
-  const diagnosticTopics = data.QUESTIONS.map((q) => q.topic);
-  const today = new Date();
-  const todayIndex = (today.getDay() + 6) % 7;
-
-  // ---- groups ----
-  const groupId = new Map<string, number>();
-  for (const g of data.GROUPS) {
-    const [start, end] = times(g.time);
-    const [res] = await pool.query<ResultSetHeader>("INSERT INTO session_groups (name, day_of_week, start_time, end_time, zoom_link, capacity, created_by) VALUES (?, ?, ?, ?, ?, 8, ?)", [
-      g.name, DAY_INDEX[g.day], start, end, `https://${g.zoom.replace(/[[\]]/g, "")}`, tutor.id,
-    ]);
-    groupId.set(g.id, res.insertId);
-    for (const topic of g.focus) await pool.query("INSERT INTO session_group_topics (group_id, topic) VALUES (?, ?)", [res.insertId, topic]);
-  }
-
-  // ---- students ----
-  const studentId = new Map<string, number>();
-  const groupOf = new Map<string, string>();
-  for (const s of data.SAMPLE) {
-    const [res] = await pool.query<ResultSetHeader>("INSERT INTO users (full_name, email, password_hash, role, is_active) VALUES (?, ?, ?, 'student', 1)", [s.name, emailOf(s.name), hash]);
-    const id = res.insertId;
-    await pool.query("UPDATE users SET user_code = ? WHERE id = ?", [userCode("student", id), id]);
-    studentId.set(s.name, id);
-    groupOf.set(s.name, s.group);
-    await pool.query("INSERT INTO student_profiles (user_id, level, subject_id, exam_board_id, school_year_id, target_grade_id, tier) VALUES (?, 'GCSE', ?, ?, ?, ?, 'Higher')", [id, profile.subject, profile.board, profile.year, profile.target]);
-
-    // The diagnostic: this many of the 10 questions right; the wrong ones are the group's focus topics first.
-    const group = data.GROUPS.find((g) => g.id === s.group)!;
-    const correct = Math.round(s.score / 10);
-    const wrongCount = diagnosticTopics.length - correct;
-    const ranked = [...diagnosticTopics.filter((t) => group.focus.includes(t)), ...diagnosticTopics.filter((t) => !group.focus.includes(t))];
-    const wrong = ranked.slice(0, wrongCount);
-    const strong = diagnosticTopics.filter((t) => !wrong.includes(t));
-    const misconceptions = wrong.flatMap((t) => {
-      const q = data.QUESTIONS.find((x) => x.topic === t)!;
-      const label = q.opts.find((o) => o[1] === 0 && o[2])?.[2];
-      return label ? [{ topic: t, text: label }] : [];
-    });
-    const details = { strong, needWork: wrong, notLearnedTopics: [] as string[], misconceptions };
-    await pool.query("INSERT INTO diagnostic_attempts (user_id, correct, not_learned, total, details) VALUES (?, ?, 0, ?, ?)", [id, correct, diagnosticTopics.length, JSON.stringify(details)]);
-
-    // Topic statuses: the diagnostic's, then more topics mastered until the prototype's count is reached.
-    const status = new Map<string, string>();
-    wrong.forEach((t) => status.set(t, "needs_work"));
-    strong.forEach((t) => status.set(t, "mastered"));
-    for (const t of allTopics) {
-      if ([...status.values()].filter((v) => v === "mastered").length >= s.topics) break;
-      if (!status.has(t)) status.set(t, "mastered");
-    }
-    for (const [topic, st] of status) await pool.query("INSERT INTO student_topic_status (student_id, topic, status) VALUES (?, ?, ?)", [id, topic, st]);
-
-    // Practice time this week (Monday to today) and the latest score.
-    if (s.mins > 0) {
-      const days = todayIndex + 1;
-      const each = Math.floor(s.mins / days);
-      for (let i = 0; i < days; i++) await pool.query("INSERT INTO practice_minutes (student_id, day, minutes) VALUES (?, ?, ?)", [id, ymd(addDays(today, i - todayIndex)), i === days - 1 ? s.mins - each * (days - 1) : each]);
-    }
-    await pool.query("INSERT INTO lesson_results (student_id, lesson_id, topic, title, got, max_marks, percent, detail) VALUES (?, NULL, ?, ?, ?, 100, ?, '[]')", [
-      id, group.focus[0], `${group.focus[0]} check`, s.score, s.score,
-    ]);
-
-    await pool.query("INSERT INTO student_groups (student_id, group_id, note, send_video, assigned_by) VALUES (?, ?, ?, 1, ?)", [
-      id, groupId.get(s.group), "Welcome! In this session we'll fix the mistakes from your diagnostic. Watch the short video before we start.", tutor.id,
-    ]);
-  }
-
-  // ---- lessons ----
-  const lessonId = new Map<string, number>();
-  for (const [topic, list] of Object.entries(data.LESSONS)) {
-    for (const l of list) {
-      const [res] = await pool.query<ResultSetHeader>("INSERT INTO lessons (topic, title, blocks, published, created_by) VALUES (?, ?, ?, ?, ?)", [topic, l.title, JSON.stringify(l.blocks), l.published ? 1 : 0, tutor.id]);
-      lessonId.set(l.id, res.insertId);
-    }
-  }
-
-  // ---- route ----
-  for (const r of data.ROUTES) {
-    const [res] = await pool.query<ResultSetHeader>("INSERT INTO learning_routes (name, description, created_by) VALUES (?, ?, ?)", [r.name, r.desc, tutor.id]);
-    for (let i = 0; i < r.items.length; i++) await pool.query("INSERT INTO route_steps (route_id, position, item_type, item_id, week) VALUES (?, ?, 'lesson', ?, ?)", [res.insertId, i + 1, lessonId.get(r.items[i].lesson), r.items[i].week]);
-    for (const who of r.assigned) {
-      const id = studentId.get(who.replace(/^s:/, ""));
-      if (id) await pool.query("INSERT INTO route_assignments (route_id, student_id, assigned_at) VALUES (?, ?, CURDATE())", [res.insertId, id]);
-    }
-  }
-
-  // ---- calendar: weeks -2 to +5, five weekly series, with session logs for the recent ones ----
-  const monday = addDays(today, -todayIndex);
-  const plan = [
-    { key: "g1", group: "g1", day: 3, start: "18:00", series: "sg1" },
-    { key: "g2", group: "g2", day: 5, start: "11:00", series: "sg2" },
-    { key: "g3", group: "g3", day: 6, start: "17:00", series: "sg3" },
-    { key: "Bilal Raza", student: "Bilal Raza", day: 1, start: "17:00", series: "sb1" },
-    { key: "Zara Malik", student: "Zara Malik", day: 0, start: "16:30", series: "sz1" },
-  ];
-  const topicOf: Record<string, string> = { g1: "Simultaneous equations", g2: "Trigonometry", g3: "Percentages", "Bilal Raza": "Factorising quadratics", "Zara Malik": "Expanding brackets" };
-  const cutoff = ymd(addDays(today, -3));
-  let logged = 0;
-  let waiting = 0;
-  let n = 0;
-  for (let w = -2; w <= 5; w++) {
-    for (const p of plan) {
-      const date = ymd(addDays(monday, w * 7 + p.day));
-      const isGroup = Boolean(p.group);
-      const gid = p.group ? groupId.get(p.group)! : null;
-      const sid = p.student ? studentId.get(p.student)! : null;
-      const zoom = p.group ? `https://${data.GROUPS.find((g) => g.id === p.group)!.zoom.replace(/[[\]]/g, "")}` : "https://zoom.us/j/MEETING-ID";
-      const [res] = await pool.query<ResultSetHeader>("INSERT INTO session_bookings (tutor_id, student_id, group_id, session_date, start_time, minutes, zoom_link, series_id) VALUES (?, ?, ?, ?, ?, 60, ?, ?)", [
-        tutor.id, sid, gid, date, p.start, zoom, `${SERIES}${p.series}`,
-      ]);
-      n += 1;
-      // A log for sessions that are over and in the last two weeks; a few of the newest are left for the tutor to log.
-      if (date >= ymd(today) || date < ymd(addDays(monday, -14))) continue;
-      if (date >= cutoff && n % 4 === 0) {
-        waiting += 1;
-        continue;
-      }
-      const members = isGroup ? data.SAMPLE.filter((s) => s.group === p.group).map((s) => studentId.get(s.name)!) : [];
-      const present = members.slice(0, Math.max(1, members.length - 1));
-      const name = isGroup ? data.GROUPS.find((g) => g.id === p.group)!.name : p.student!;
-      await pool.query(
-        `INSERT INTO lesson_logs (booking_id, tutor_id, tutor_name, lesson_date, student_or_class, lesson_type, attendance, duration_minutes, completed,
-           homework_assigned, homework_other, engagement_notes, next_focus, zoom_recorded, topics, engagement, focus_score, attendees)
-         VALUES (?, ?, ?, ?, ?, ?, 'Present', 60, 'Yes', 1, ?, ?, ?, 0, ?, ?, ?, ?)`,
-        [res.insertId, tutor.id, tutor.name, date, name, isGroup ? "Group" : "1:1", `Practice set on ${topicOf[p.key]}`, "Good use of the method on exam-style questions.", "Practise mixed questions and show full working.",
-         topicOf[p.key], 3 + (n % 3), 3 + ((n + 1) % 3), isGroup ? JSON.stringify(present) : null]
-      );
-      logged += 1;
-    }
-  }
-
-  // ---- chats (the sample conversations) ----
-  const now = Date.now();
-  let messages = 0;
-  for (const chat of data.MESSAGES) {
-    const sid = studentId.get(chat.name);
-    if (!sid) continue;
-    for (const m of chat.msgs) {
-      // The prototype stores each time as an offset from "now" when it was made; keep the same gaps.
-      const age = Math.max(0, now - m.at);
-      await pool.query("INSERT INTO chat_messages (student_id, staff_id, sender_id, body, created_at) VALUES (?, ?, ?, ?, ?)", [sid, tutor.id, m.from === "student" ? sid : tutor.id, m.text, new Date(now - (age > 1e9 ? 3600000 : age))]);
-      messages += 1;
-    }
-  }
-
-  return { students: data.SAMPLE.length, groups: data.GROUPS.length, bookings: n, logged, waiting, lessons: lessonId.size, messages, tutor: tutor.name };
-}
-
-const mode = process.argv[2];
+const db = await connect();
 try {
-  const removed = await remove();
-  if (mode === "remove") {
-    console.log(`Removed the demo data (${removed} demo student${removed === 1 ? "" : "s"}).`);
-  } else {
-    const r = await seed();
-    console.log(`Demo data added for ${r.tutor}: ${r.students} students, ${r.groups} groups, ${r.bookings} booked sessions (${r.logged} logged, ${r.waiting} waiting for a log), ${r.lessons} lessons, 1 route, ${r.messages} chat messages.`);
-    console.log(`Demo students sign in with firstname.lastname@${DOMAIN} and the password ${PASSWORD}`);
+  const removed = await remove(db);
+  if (process.argv[2] === "remove") {
+    console.log(`Removed ${removed} demo account(s) and their data from "${dbName}".`);
+    process.exit(0);
   }
+
+  const hash12 = await bcrypt.hash(PASSWORD, 10);
+  const q = async <T extends RowDataPacket>(sql: string, p: unknown[] = []) => (await db.query<T[]>(sql, p))[0];
+  const run = async (sql: string, p: unknown[] = []) => (await db.query<ResultSetHeader>(sql, p))[0];
+  const newUser = async (name: string, role: "tutor" | "student", extra: { headline?: string } = {}) => {
+    const r = await run("INSERT INTO users (full_name, email, password_hash, role, headline) VALUES (?, ?, ?, ?, ?)", [name, emailOf(name), hash12, role, extra.headline ?? ""]);
+    await run("UPDATE users SET user_code = ? WHERE id = ?", [`${role === "tutor" ? "TUT" : "STU"}-${String(r.insertId).padStart(5, "0")}`, r.insertId]);
+    return r.insertId;
+  };
+
+  // ---- teachers
+  const tutorId: Record<string, number> = {};
+  for (const t of TEACHERS) {
+    const id = await newUser(t.name, "tutor", { headline: t.headline });
+    for (const s of t.subjects) await run("INSERT INTO tutor_subjects (user_id, subject_id) VALUES (?, ?)", [id, s]);
+    for (const s of t.subjects) tutorId[s] = id;
+  }
+  const sarah = tutorId.maths, david = tutorId.physics;
+
+  // ---- groups (day: Mon = 0)
+  const grp = async (name: string, subject: string, tutor: number, day: number, time: string) =>
+    (await run("INSERT INTO session_groups (name, subject_id, level_id, tutor_id, day_of_week, start_time, zoom_link) VALUES (?, ?, 'gcse', ?, ?, ?, ?)", [name, subject, tutor, day, time, "https://zoom.us/j/demo-" + subject])).insertId;
+  const groupId: Record<string, number> = { maths: await grp("Thursday GCSE Maths", "maths", sarah, 3, "17:00:00"), physics: await grp("Tuesday GCSE Physics", "physics", david, 1, "18:00:00") };
+
+  // ---- topics per subject
+  const topics = await q("SELECT t.id, t.name, s.subject_id FROM topics t JOIN strands s ON s.id = t.strand_id ORDER BY t.id");
+  const topicsOf = (subject: string) => topics.filter((t) => t.subject_id === subject);
+
+  // ---- students, enrolments, learning-map statuses, study time, results
+  const enrol: Record<string, number[]> = {}; // student name -> enrolment ids
+  const enrolBy: Record<string, { id: number; student: string; subject: string; studentId: number }> = {};
+  const studentId: Record<string, number> = {};
+  const RESULT_TITLES: Record<string, string[]> = { maths: ["Algebra check-in", "Number quiz", "Mock paper 1"], physics: ["Forces quiz", "Energy check-in", "Mock paper 1"], chemistry: ["Atoms quiz", "Bonding check-in", "Mock paper 1"] };
+  for (const s of STUDENTS) {
+    const id = await newUser(s.name, "student");
+    studentId[s.name] = id;
+    await run("INSERT INTO student_profiles (user_id, level_id, school_year, plan_id, parent_name, parent_email, parent_phone, recording_ok) VALUES (?, 'gcse', ?, ?, ?, ?, ?, 1)", [id, s.year, s.plan, s.parent, `${s.parent.toLowerCase().replace(/\s+/g, ".")}@${DOMAIN}`, "07700 900" + String(100 + (hash(s.name) % 900))]);
+    enrol[s.name] = [];
+    for (const [subject, [tier, board, cur, tgt, score]] of Object.entries(s.subs)) {
+      const done = score !== null;
+      const mis = done && score < 60 ? JSON.stringify(["Mixing up the order of operations", "Not checking units"]) : JSON.stringify([]);
+      const e = await run(
+        "INSERT INTO enrolments (student_id, subject_id, level_id, tier, board, current_grade, target_grade, diagnostic_done, diagnostic_score, misconceptions, tutor_id, group_id) VALUES (?, ?, 'gcse', ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        [id, subject, tier, board, cur, tgt, done ? 1 : 0, done ? score : null, mis, tutorId[subject], s.group === subject ? groupId[subject] : null]
+      );
+      enrol[s.name].push(e.insertId);
+      enrolBy[`${s.name}|${subject}`] = { id: e.insertId, student: s.name, subject, studentId: id };
+      if (done) {
+        // The learning map: the higher the diagnostic score, the more topics are mastered / in progress.
+        const list = topicsOf(subject);
+        for (let i = 0; i < list.length; i++) {
+          const r = (hash(s.name + subject + i) % 100) / 100;
+          const m = score / 100;
+          const st = r < m * 0.45 ? "M" : r < m * 0.8 ? "P" : r < 0.9 ? "W" : "N";
+          await run("INSERT INTO enrolment_topic_status (enrolment_id, topic_id, status) VALUES (?, ?, ?)", [e.insertId, list[i].id, st]);
+        }
+        for (let d = 0; d < 14; d++) if ((hash(s.name + subject + "d" + d) % 3) !== 0) await run("INSERT INTO study_minutes (enrolment_id, study_date, minutes) VALUES (?, ?, ?)", [e.insertId, ymd(addDays(-d)), 15 + (hash(s.name + d) % 50)]);
+        const titles = RESULT_TITLES[subject] ?? ["Quiz"];
+        for (let i = 0; i < 3; i++) await run("INSERT INTO learning_results (enrolment_id, title, pct, created_at) VALUES (?, ?, ?, ?)", [e.insertId, titles[i], Math.max(20, Math.min(98, score + ((hash(s.name + i) % 21) - 10) + i * 3)), addDays(-20 + i * 8)]);
+      }
+    }
+  }
+
+  // ---- lessons and a route per teacher (visible to students)
+  const block = (type: string, d: object) => JSON.stringify({ type, ...d });
+  const makeItem = async (tutor: number, subject: string, kind: string, title: string, topicName: string, blocks: object[]) => {
+    const topic = topicsOf(subject).find((t) => t.name === topicName) ?? topicsOf(subject)[0];
+    const it = await run("INSERT INTO content_items (kind, title, subject_id, level_id, topic_id, source, published, created_by) VALUES (?, ?, ?, 'gcse', ?, '', 1, ?)", [kind, title, subject, topic.id, tutor]);
+    for (let i = 0; i < blocks.length; i++) {
+      const b = blocks[i] as { type: string };
+      const { type, ...rest } = b;
+      await run("INSERT INTO content_blocks (item_id, position, type, data) VALUES (?, ?, ?, ?)", [it.insertId, i, type, JSON.stringify(rest)]);
+    }
+    return it.insertId;
+  };
+  const mathsLesson = await makeItem(sarah, "maths", "lesson", "Expanding brackets", "Expanding brackets", [
+    { type: "slide", title: "Multiply every term", body: "To expand a bracket, multiply every term inside by the term outside.\n\nExample: $3(x + 4) = 3x + 12$" },
+    { type: "mcq", question: "Expand $2(x + 5)$.", options: ["$2x + 5$", "$2x + 10$", "$x + 10$", "$2x + 7$"], correct: 1, explain: "Multiply both terms by 2." },
+    { type: "written", question: "Expand and simplify $3(x + 2) + 2(x - 1)$.", markScheme: "$3x + 6 + 2x - 2 = 5x + 4$", marks: 3 },
+  ]);
+  const mathsQuiz = await makeItem(sarah, "maths", "quiz", "Fractions quick quiz", "Fractions", [
+    { type: "mcq", question: "What is $\\frac{1}{2} + \\frac{1}{4}$?", options: ["$\\frac{2}{6}$", "$\\frac{3}{4}$", "$\\frac{1}{8}$", "$\\frac{2}{4}$"], correct: 1, explain: "Make the bottoms the same: $\\frac{2}{4} + \\frac{1}{4}$." },
+    { type: "mcq", question: "Which is the largest?", options: ["$\\frac{1}{3}$", "$\\frac{2}{5}$", "$\\frac{3}{8}$", "$\\frac{1}{4}$"], correct: 1, explain: "Compare as decimals: 0.33, 0.4, 0.375, 0.25." },
+  ]);
+  const physLesson = await makeItem(david, "physics", "lesson", "Forces and motion", topicsOf("physics")[0].name, [
+    { type: "slide", title: "Resultant force", body: "The resultant force is the single force that has the same effect as all the forces acting on an object.\n\n$F = ma$" },
+    { type: "mcq", question: "A 2 kg mass has a resultant force of 10 N. What is its acceleration?", options: ["5 m/s²", "20 m/s²", "0.2 m/s²", "8 m/s²"], correct: 0, explain: "$a = F \\div m = 10 \\div 2$." },
+    { type: "written", question: "State Newton's second law.", markScheme: "Acceleration is proportional to the resultant force and inversely proportional to the mass.", marks: 2 },
+  ]);
+  const route = async (tutor: number, subject: string, name: string, items: [number, number][], groupKey: string) => {
+    const r = await run("INSERT INTO learning_routes (name, subject_id, level_id, created_by, assigned_at) VALUES (?, ?, 'gcse', ?, NOW())", [name, subject, tutor]);
+    for (let i = 0; i < items.length; i++) await run("INSERT INTO route_steps (route_id, position, item_id, week) VALUES (?, ?, ?, ?)", [r.insertId, i, items[i][0], items[i][1]]);
+    await run("INSERT INTO route_audience (route_id, group_id, enrolment_id) VALUES (?, ?, NULL)", [r.insertId, groupId[groupKey]]);
+    return r.insertId;
+  };
+  await route(sarah, "maths", "Algebra foundations", [[mathsLesson, 1], [mathsQuiz, 2]], "maths");
+  await route(david, "physics", "Forces starter", [[physLesson, 1]], "physics");
+
+  // some students have already done tasks
+  for (const [key, e] of Object.entries(enrolBy)) {
+    const h = hash(key);
+    if (e.subject === "maths" && STUDENTS.find((s) => s.name === e.student)?.group === "maths" && h % 3 !== 0) await run("INSERT INTO item_completions (enrolment_id, item_id, score) VALUES (?, ?, ?)", [e.id, mathsLesson, 50 + (h % 51)]);
+    if (e.subject === "physics" && STUDENTS.find((s) => s.name === e.student)?.group === "physics" && h % 2 === 0) await run("INSERT INTO item_completions (enrolment_id, item_id, score) VALUES (?, ?, ?)", [e.id, physLesson, 40 + (h % 61)]);
+  }
+
+  // ---- calendar: last week's lesson (logged) and the next two (booked), for each group
+  for (const [key, subj, tutor, day, time, topicName] of [
+    ["maths", "maths", sarah, 3, "17:00:00", "Fractions"],
+    ["physics", "physics", david, 1, "18:00:00", topicsOf("physics")[0].name],
+  ] as const) {
+    const members = Object.values(enrolBy).filter((e) => e.subject === subj && STUDENTS.find((s) => s.name === e.student)?.group === key);
+    const past = nextWeekday(day, -1);
+    if (past > new Date()) past.setDate(past.getDate() - 7);
+    const pb = await run("INSERT INTO session_bookings (kind, group_id, enrolment_id, tutor_id, session_date, start_time, minutes, zoom_link, logged) VALUES ('group', ?, NULL, ?, ?, ?, 60, ?, 1)", [groupId[key], tutor, ymd(past), time, "https://zoom.us/j/demo-" + subj]);
+    const t = topicsOf(subj).find((x) => x.name === topicName) ?? topicsOf(subj)[0];
+    const log = await run("INSERT INTO lesson_logs (booking_id, tutor_id, topic_id, topic_name, note, homework) VALUES (?, ?, ?, ?, ?, ?)", [pb.insertId, tutor, t.id, t.name, "Good session. Most of the class were confident; two need another example.", "Finish the practice sheet."]);
+    for (const m of members) await run("INSERT INTO lesson_log_attendance (log_id, enrolment_id, present) VALUES (?, ?, ?)", [log.insertId, m.id, hash(m.student + "att") % 6 === 0 ? 0 : 1]);
+    for (const w of [0, 1]) {
+      const d = nextWeekday(day, w);
+      await run("INSERT INTO session_bookings (kind, group_id, enrolment_id, tutor_id, session_date, start_time, minutes, zoom_link, logged) VALUES ('group', ?, NULL, ?, ?, ?, 60, ?, 0)", [groupId[key], tutor, ymd(d), time, "https://zoom.us/j/demo-" + subj]);
+    }
+  }
+  // a one-to-one session for a student without a group
+  const harry = enrolBy["Harry Wilson|chemistry"];
+  await run("INSERT INTO session_bookings (kind, group_id, enrolment_id, tutor_id, session_date, start_time, minutes, zoom_link, logged) VALUES ('one', NULL, ?, ?, ?, '16:00:00', 45, ?, 0)", [harry.id, david, ymd(addDays(3)), "https://zoom.us/j/demo-one"]);
+
+  // ---- monthly reports (a draft, a ready one and a sent one)
+  const report = async (key: string, tutor: number, status: string, body: string) => run("INSERT INTO monthly_reports (enrolment_id, tutor_id, report_month, body, status, sent_at) VALUES (?, ?, ?, ?, ?, ?)", [enrolBy[key].id, tutor, new Date().toLocaleString("en-GB", { month: "long", year: "numeric" }), body, status, status === "sent" ? new Date() : null]);
+  await report("Aisha Khan|maths", sarah, "sent", "Aisha has worked steadily this month and moved from a 5 towards a 6 on algebra questions. Next: factorising.");
+  await report("Ben Carter|maths", sarah, "ready", "Ben is confident with number and algebra. He should practise showing more working on longer questions.");
+  await report("Chloe Evans|maths", sarah, "draft", "");
+  await report("Grace Liu|physics", david, "ready", "Grace is working at a 7-8 standard in physics. Keep practising 6-mark questions.");
+
+  // ---- chats (the thread id is the student and the teacher; the last message from a student is unread by the teacher)
+  const chat = async (student: string, subject: string, lines: [("t" | "s"), string][]) => {
+    const sid = studentId[student], tid = tutorId[subject];
+    await run("INSERT IGNORE INTO chat_threads (student_id, staff_id) VALUES (?, ?)", [sid, tid]);
+    for (let i = 0; i < lines.length; i++) await run("INSERT INTO chat_messages (student_id, staff_id, sender_id, body, created_at) VALUES (?, ?, ?, ?, ?)", [sid, tid, lines[i][0] === "t" ? tid : sid, lines[i][1], new Date(Date.now() - (lines.length - i) * 3600_000 * 5)]);
+  };
+  await chat("Aisha Khan", "maths", [["t", "Hi Aisha, welcome to the group! Your first task is on your learning map."], ["s", "Thank you! Can I do it before Thursday?"], ["t", "Yes, that's perfect."]]);
+  await chat("Ben Carter", "maths", [["t", "Great quiz score last week, Ben."], ["s", "Thanks, could we go over simultaneous equations?"]]);
+  await chat("Farhan Ali", "physics", [["t", "Hi Farhan, I've added a Forces starter route for you."], ["s", "Got it, I'll start tonight."]]);
+  await chat("Harry Wilson", "chemistry", [["t", "Hi Harry, your one-to-one session is booked for this week."]]);
+
+  console.log(`\nDemo data added to "${dbName}": ${TEACHERS.length} teachers and ${STUDENTS.length} students.`);
+  console.log(`Password for every demo account: ${PASSWORD}\n`);
+  console.log("Teachers (Teacher tab):");
+  for (const t of TEACHERS) console.log(`  ${t.name.padEnd(16)} ${emailOf(t.name)}   [${t.subjects.join(", ")}]`);
+  console.log("Students (Student tab):");
+  for (const s of STUDENTS) console.log(`  ${s.name.padEnd(16)} ${emailOf(s.name)}   [${Object.keys(s.subs).join(", ")}]`);
+  console.log("\nRemove it all again with: npm run db:unseed-demo\n");
 } finally {
-  await pool.end();
+  await db.end();
 }

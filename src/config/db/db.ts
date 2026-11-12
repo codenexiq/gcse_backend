@@ -6,6 +6,7 @@ export const pool = mysql.createPool({
   ...env.db,
   waitForConnections: true,
   connectionLimit: 10,
+  dateStrings: ["DATE"], // a DATE column is the plain text "2026-11-12", never a timezone-shifted Date
 });
 
 // Strict mode: bad data (for example a role that does not exist) is REFUSED with an error.
