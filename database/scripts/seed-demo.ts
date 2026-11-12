@@ -1,5 +1,5 @@
 // Fills the database with a small, believable school so every screen has something to show:
-// 2 teachers, 10 students (1-2 subjects each), 2 weekly groups, diagnostic results, learning-map statuses, study time,
+// 1 admin, 2 teachers, 10 students (1-2 subjects each), 2 weekly groups, diagnostic results, learning-map statuses, study time,
 // recent results, booked and logged lessons, lessons and a learning route, completed tasks, monthly reports and chats.
 //
 //   npm run db:seed-demo       adds it (earlier demo data is removed first, so it is safe to repeat)
@@ -14,6 +14,7 @@ import { connect, dbName } from "./connection.js";
 const PASSWORD = "Demo1234!";
 const DOMAIN = "demo.educate.local";
 
+const ADMIN_NAME = "Demo Admin";
 const TEACHERS = [
   { name: "Sarah Bennett", subjects: ["maths"], headline: "GCSE and A-level Maths" },
   { name: "David Okafor", subjects: ["physics", "chemistry"], headline: "GCSE Physics and Chemistry" },
@@ -66,11 +67,14 @@ try {
   const hash12 = await bcrypt.hash(PASSWORD, 10);
   const q = async <T extends RowDataPacket>(sql: string, p: unknown[] = []) => (await db.query<T[]>(sql, p))[0];
   const run = async (sql: string, p: unknown[] = []) => (await db.query<ResultSetHeader>(sql, p))[0];
-  const newUser = async (name: string, role: "tutor" | "student", extra: { headline?: string } = {}) => {
+  const newUser = async (name: string, role: "tutor" | "student" | "admin", extra: { headline?: string } = {}) => {
     const r = await run("INSERT INTO users (full_name, email, password_hash, role, headline) VALUES (?, ?, ?, ?, ?)", [name, emailOf(name), hash12, role, extra.headline ?? ""]);
-    await run("UPDATE users SET user_code = ? WHERE id = ?", [`${role === "tutor" ? "TUT" : "STU"}-${String(r.insertId).padStart(5, "0")}`, r.insertId]);
+    await run("UPDATE users SET user_code = ? WHERE id = ?", [`${role === "tutor" ? "TUT" : role === "admin" ? "ADM" : "STU"}-${String(r.insertId).padStart(5, "0")}`, r.insertId]);
     return r.insertId;
   };
+
+  // ---- a demo administrator
+  await newUser(ADMIN_NAME, "admin", { headline: "Educate Cloud team" });
 
   // ---- teachers
   const tutorId: Record<string, number> = {};
@@ -208,6 +212,8 @@ try {
 
   console.log(`\nDemo data added to "${dbName}": ${TEACHERS.length} teachers and ${STUDENTS.length} students.`);
   console.log(`Password for every demo account: ${PASSWORD}\n`);
+  console.log("Admin (Admin tab):");
+  console.log(`  ${ADMIN_NAME.padEnd(16)} ${emailOf(ADMIN_NAME)}`);
   console.log("Teachers (Teacher tab):");
   for (const t of TEACHERS) console.log(`  ${t.name.padEnd(16)} ${emailOf(t.name)}   [${t.subjects.join(", ")}]`);
   console.log("Students (Student tab):");
